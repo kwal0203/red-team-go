@@ -1,9 +1,10 @@
-from typing import Any
+from typing import List, Tuple
+from src.context import SemanticEntropyContext
 from src.utility.response import response_generator
 
 
-### Semantic entropy
 def make_prompt(context: str, question: str) -> str:
+    """Create a prompt for QA-style semantic entropy evaluation."""
     prompt = ""
     prompt += f"Context: {context}\n"
     prompt += f"Question: {question}\n"
@@ -12,20 +13,30 @@ def make_prompt(context: str, question: str) -> str:
 
 
 def get_generations(
-    session_state: Any,
+    context: SemanticEntropyContext,
     prompt: str,
     num_generations: int = 10,
     temperature: float = 0.5,
-):
-    # We sample one low temperature answer on which we will compute the
-    # accuracy and args.num_generation high temperature answers which will
-    # be used to estimate the entropy variants.
-    #
-    # Note: I'm not calculating accuracies so I don't need the initial
-    #       low temperature generation
+) -> List[Tuple[str, List]]:
+    """
+    Generate multiple responses for semantic entropy calculation.
+
+    We sample multiple high temperature answers which will be used to estimate
+    the semantic entropy - responses that are semantically equivalent indicate
+    higher model confidence.
+
+    Args:
+        context: SemanticEntropyContext containing model client and configuration.
+        prompt: The input prompt to generate responses for.
+        num_generations: Number of responses to generate.
+        temperature: Sampling temperature (higher = more diverse).
+
+    Returns:
+        List of tuples containing (response_text, log_likelihoods).
+    """
     responses = []
     for _ in range(num_generations):
-        response = response_generator(session_state=session_state, prompt=prompt)
+        response = response_generator(context=context, prompt=prompt)
         response_dict = response.to_dict()
         predicted_answer = response_dict["choices"][0]["message"]["content"]
         log_likelihoods = response_dict["choices"][0]["logprobs"]["content"]
