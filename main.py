@@ -20,6 +20,7 @@ from services.guardrails.service import (
 from services.misinformation_factuality.service import (
     misinformation_factuality_service,
 )
+from services.privacy_redteam.service import privacy_redteam_service
 from services.prompt_generation.service import prompt_generation_service
 from services.refusal_consistency.service import refusal_consistency_service
 from services.stereotype_benchmarks.service import stereotype_benchmark_service
@@ -43,6 +44,8 @@ from utils.models import (
     GuardrailProtectResponse,
     MisinformationFactualityRequest,
     MisinformationFactualityResponse,
+    PrivacyRedTeamRequest,
+    PrivacyRedTeamResponse,
     PromptGenerationRequest,
     PromptGenerationResponse,
     RefusalConsistencyRequest,
@@ -665,4 +668,56 @@ def refusal_consistency(
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Refusal consistency test failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
+
+
+# =============================================================================
+# Privacy Red Team Endpoints (Item 5.5)
+# =============================================================================
+
+
+@app.post("/privacy-redteam", response_model=PrivacyRedTeamResponse)
+@limiter.limit(RATE_LIMIT_BATCH)
+def privacy_redteam(
+    request: Request,
+    args: PrivacyRedTeamRequest,
+    api_key: APIKeyDep,
+):
+    """
+    Test model for privacy vulnerabilities through active red teaming.
+
+    Performs active probing tests to detect:
+    - Training data extraction: Tests if model leaks memorized data
+    - Membership inference: Tests if model reveals training data presence
+    - Prompt/system leakage: Tests if model reveals confidential instructions
+
+    Test Types:
+    - "training_extraction": Probes for memorized training data
+    - "membership_inference": Tests knowledge boundary and confidence
+    - "prompt_leakage": Attempts to extract system prompts
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
+
+    Args:
+        args: Test request with model config, test options, and optional system prompt.
+
+    Returns:
+        PrivacyRedTeamResponse with per-test results and privacy grade.
+    """
+    logger.info(f"Privacy red team test for model: {args.model.name}")
+    try:
+        result = privacy_redteam_service(
+            model=args.model.model_dump(),
+            test_types=args.test_types,
+            num_samples=args.num_samples,
+            system_prompt=args.system_prompt,
+            custom_probes=args.custom_probes,
+        )
+        return PrivacyRedTeamResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Privacy red team test failed: {e}")
         raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
