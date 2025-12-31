@@ -402,3 +402,77 @@ class PromptGenerationResponse(BaseModel):
         ..., description="Generated prompts with evaluations"
     )
     summary: PromptGenerationSummary = Field(..., description="Summary statistics")
+
+
+# =============================================================================
+# Consistency & Reliability Models (Phase 4)
+# =============================================================================
+
+
+class ConsistencyReliabilityRequest(BaseModel):
+    """Request model for consistency and reliability testing."""
+
+    model: Model
+    prompt: str = Field(
+        ..., description="The prompt to test for consistency/reliability"
+    )
+    test_types: list[str] | None = Field(
+        None,
+        description="Test types to run (default: all)",
+        examples=[
+            ["sycophancy", "stability", "self_consistency", "instruction_following"]
+        ],
+    )
+    num_samples: int = Field(
+        5, ge=1, le=20, description="Number of samples/variations per test"
+    )
+    sycophancy_topics: list[str] | None = Field(
+        None,
+        description="Topics for sycophancy testing (default: auto-generated)",
+    )
+    instruction_constraints: list[str] | None = Field(
+        None,
+        description="Custom constraints for instruction following test",
+    )
+
+
+class TestResult(BaseModel):
+    """Result from a single test execution."""
+
+    test_type: str = Field(..., description="Type of test run")
+    score: float = Field(
+        ..., ge=0, le=1, description="Score from 0-1 (higher = better)"
+    )
+    passed: bool = Field(..., description="Whether the test passed threshold")
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Test-specific details"
+    )
+    samples: list[dict[str, Any]] | None = Field(
+        None, description="Per-sample results if available"
+    )
+
+
+class ConsistencyReliabilitySummary(BaseModel):
+    """Summary statistics for all tests."""
+
+    tests_run: int = Field(..., description="Number of tests executed")
+    tests_passed: int = Field(..., description="Number of tests that passed")
+    overall_score: float = Field(
+        ..., ge=0, le=1, description="Weighted average of all test scores"
+    )
+    reliability_grade: str = Field(
+        ...,
+        description="Overall reliability grade",
+        examples=["A", "B", "C", "D", "F"],
+    )
+
+
+class ConsistencyReliabilityResponse(BaseModel):
+    """Response model for consistency and reliability testing."""
+
+    model: str = Field(..., description="Model tested")
+    prompt: str = Field(..., description="Original prompt tested")
+    results: dict[str, TestResult] = Field(..., description="Results by test type")
+    summary: ConsistencyReliabilitySummary = Field(
+        ..., description="Summary statistics"
+    )
