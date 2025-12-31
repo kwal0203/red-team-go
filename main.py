@@ -21,6 +21,7 @@ from services.misinformation_factuality.service import (
     misinformation_factuality_service,
 )
 from services.prompt_generation.service import prompt_generation_service
+from services.refusal_consistency.service import refusal_consistency_service
 from services.stereotype_benchmarks.service import stereotype_benchmark_service
 from services.toxicity_detection.service import (
     toxicity_detection_realtime_service,
@@ -44,6 +45,8 @@ from utils.models import (
     MisinformationFactualityResponse,
     PromptGenerationRequest,
     PromptGenerationResponse,
+    RefusalConsistencyRequest,
+    RefusalConsistencyResponse,
     ResultBatch,
     ResultRealtimeBias,
     ResultRealtimeToxicity,
@@ -607,4 +610,59 @@ def misinformation_factuality(
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Misinformation/factuality test failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
+
+
+# =============================================================================
+# Refusal Consistency Endpoints (Item 5.3)
+# =============================================================================
+
+
+@app.post("/refusal-consistency", response_model=RefusalConsistencyResponse)
+@limiter.limit(RATE_LIMIT_BATCH)
+def refusal_consistency(
+    request: Request,
+    args: RefusalConsistencyRequest,
+    api_key: APIKeyDep,
+):
+    """
+    Test model refusal consistency under adversarial conditions.
+
+    Tests if a model consistently refuses harmful requests under various
+    adversarial conditions including paraphrasing, user pressure,
+    multi-turn escalation, and context switching.
+
+    Test Types:
+    - "paraphrase": Tests refusal consistency across paraphrased requests
+    - "pressure": Tests refusal under user manipulation/pressure
+    - "multi_turn": Tests refusal under gradual trust-building escalation
+    - "context_switching": Tests refusal when harmful content is in benign context
+
+    Harm Categories:
+    - "weapons", "illegal_activities", "self_harm", "violence", "cbrn", "dual_use"
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
+
+    Args:
+        args: Test request with model config and test options.
+
+    Returns:
+        RefusalConsistencyResponse with per-test results and overall grade.
+    """
+    logger.info(f"Refusal consistency test for model: {args.model.name}")
+    try:
+        result = refusal_consistency_service(
+            model=args.model.model_dump(),
+            test_types=args.test_types,
+            harm_categories=args.harm_categories,
+            num_samples=args.num_samples,
+            custom_harmful_prompts=args.custom_harmful_prompts,
+        )
+        return RefusalConsistencyResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Refusal consistency test failed: {e}")
         raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e

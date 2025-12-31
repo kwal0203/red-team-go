@@ -557,3 +557,102 @@ class MisinformationFactualityResponse(BaseModel):
     summary: MisinformationFactualitySummary = Field(
         ..., description="Summary statistics"
     )
+
+
+# =============================================================================
+# Refusal Consistency Models (Item 5.3)
+# =============================================================================
+
+
+class RefusalConsistencyRequest(BaseModel):
+    """Request model for refusal consistency testing."""
+
+    model: Model = Field(..., description="Target model configuration")
+    test_types: list[str] | None = Field(
+        None,
+        description="Test types to run (default: all)",
+        examples=[["paraphrase", "pressure", "multi_turn", "context_switching"]],
+    )
+    harm_categories: list[str] | None = Field(
+        None,
+        description="Harmful content categories to test",
+        examples=[
+            [
+                "weapons",
+                "illegal_activities",
+                "self_harm",
+                "violence",
+                "cbrn",
+                "dual_use",
+            ]
+        ],
+    )
+    num_samples: int = Field(
+        3, ge=1, le=10, description="Number of samples per test/category"
+    )
+    custom_harmful_prompts: list[str] | None = Field(
+        None, description="Custom harmful prompts to test (optional)"
+    )
+
+
+class RefusalTestResult(BaseModel):
+    """Result from a single refusal test."""
+
+    test_type: str = Field(..., description="Type of refusal test")
+    score: float = Field(
+        ..., ge=0, le=1, description="Score from 0-1 (higher = better refusal)"
+    )
+    passed: bool = Field(..., description="Whether the test passed threshold")
+    consistency_rate: float = Field(
+        ..., ge=0, le=1, description="Rate of consistent refusals"
+    )
+    refusal_breakdown: dict[str, int] = Field(
+        ...,
+        description="Counts by refusal type (hard_refusal, soft_refusal, compliance)",
+    )
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Test-specific details"
+    )
+    samples: list[dict[str, Any]] | None = Field(
+        None, description="Per-sample results if available"
+    )
+
+
+class RefusalConsistencySummary(BaseModel):
+    """Summary statistics for refusal consistency testing."""
+
+    tests_run: int = Field(..., description="Number of tests executed")
+    tests_passed: int = Field(..., description="Number of tests that passed")
+    overall_score: float = Field(
+        ..., ge=0, le=1, description="Weighted average of all test scores"
+    )
+    overall_consistency: float = Field(
+        ..., ge=0, le=1, description="Overall refusal consistency rate"
+    )
+    hard_refusal_rate: float = Field(
+        ..., ge=0, le=1, description="Rate of hard refusals across all tests"
+    )
+    soft_refusal_rate: float = Field(
+        ..., ge=0, le=1, description="Rate of soft refusals across all tests"
+    )
+    compliance_rate: float = Field(
+        ..., ge=0, le=1, description="Rate of compliance (failures) across all tests"
+    )
+    refusal_grade: str = Field(
+        ...,
+        description="Overall refusal consistency grade",
+        examples=["A", "B", "C", "D", "F"],
+    )
+
+
+class RefusalConsistencyResponse(BaseModel):
+    """Response model for refusal consistency testing."""
+
+    model: str = Field(..., description="Model tested")
+    harm_categories_tested: list[str] = Field(
+        ..., description="Harm categories that were tested"
+    )
+    results: dict[str, RefusalTestResult] = Field(
+        ..., description="Results by test type"
+    )
+    summary: RefusalConsistencySummary = Field(..., description="Summary statistics")
