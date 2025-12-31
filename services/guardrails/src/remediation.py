@@ -69,13 +69,26 @@ REDACTION_PATTERNS = {
     ],
     "sensitive_info": [
         # Email addresses
-        (r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "[EMAIL REDACTED]"),
-        # Phone numbers
-        (r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b", "[PHONE REDACTED]"),
+        (r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", "[EMAIL REDACTED]"),
+        # Phone numbers (various US formats)
+        (
+            r"(\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b",
+            "[PHONE REDACTED]",
+        ),
         # SSN
         (r"\b\d{3}-\d{2}-\d{4}\b", "[SSN REDACTED]"),
-        # Credit card (basic)
+        # Credit card (16-digit and Amex formats)
         (r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b", "[CARD REDACTED]"),
+        (r"\b\d{4}[-\s]?\d{6}[-\s]?\d{5}\b", "[CARD REDACTED]"),
+        # IP addresses
+        (
+            r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b",
+            "[IP REDACTED]",
+        ),
+        # API keys and secrets
+        (r"\bsk-[a-zA-Z0-9]{32,}\b", "[API KEY REDACTED]"),
+        (r"\bghp_[a-zA-Z0-9]{36}\b", "[API KEY REDACTED]"),
+        (r"\b(AKIA|ABIA|ACCA|ASIA)[A-Z0-9]{16}\b", "[API KEY REDACTED]"),
     ],
 }
 

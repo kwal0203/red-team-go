@@ -14,6 +14,7 @@ from services.guardrails.src.detectors.base import (
 from services.guardrails.src.detectors.harmful_content import HarmfulContentDetector
 from services.guardrails.src.detectors.injection import InjectionDetector
 from services.guardrails.src.detectors.jailbreak import JailbreakDetector
+from services.guardrails.src.detectors.privacy import PrivacyDetector
 from services.guardrails.src.detectors.toxicity import ToxicityGuardrail
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ DEFAULT_GUARDRAILS = {
     "injection": InjectionDetector,
     "toxicity": ToxicityGuardrail,
     "harmful_content": HarmfulContentDetector,
+    "privacy": PrivacyDetector,
 }
 
 
@@ -153,7 +155,7 @@ class GuardrailPipeline:
             return RiskLevel.LOW
 
         # High severity categories
-        high_severity = {"harmful_content", "cbrn", "weapons", "violence"}
+        high_severity = {"harmful_content", "cbrn", "weapons", "violence", "privacy"}
         medium_severity = {"jailbreak", "injection", "toxicity"}
 
         # Check for critical violations

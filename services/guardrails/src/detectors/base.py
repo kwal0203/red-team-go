@@ -12,6 +12,7 @@ class GuardrailCategory(str, Enum):
     INJECTION = "injection"
     TOXICITY = "toxicity"
     HARMFUL_CONTENT = "harmful_content"
+    PRIVACY = "privacy"
 
 
 class RiskLevel(str, Enum):
