@@ -12,6 +12,7 @@ from services.bias_detection_dbias.service import (
     bias_detection_realtime_service,
     dbias_service,
 )
+from services.consistency_reliability.service import consistency_reliability_service
 from services.guardrails.service import (
     guardrails_evaluate_service,
     guardrails_protect_service,
@@ -26,6 +27,8 @@ from utils.auth import APIKeyDep
 from utils.models import (
     AdversarialRobustnessRequest,
     AdversarialRobustnessResponse,
+    ConsistencyReliabilityRequest,
+    ConsistencyReliabilityResponse,
     DetectionBatchBias,
     DetectionBatchToxicity,
     DetectionRealtimeBias,
@@ -494,3 +497,58 @@ def generate_adversarial_prompts(
         raise HTTPException(
             status_code=500, detail=f"Generation failed: {str(e)}"
         ) from e
+
+
+# =============================================================================
+# Consistency & Reliability Endpoints (Phase 4)
+# =============================================================================
+
+
+@app.post("/consistency-reliability", response_model=ConsistencyReliabilityResponse)
+@limiter.limit(RATE_LIMIT_BATCH)
+def consistency_reliability(
+    request: Request,
+    args: ConsistencyReliabilityRequest,
+    api_key: APIKeyDep,
+):
+    """
+    Test model consistency and reliability.
+
+    Runs a suite of tests to evaluate how consistent and reliable
+    a model's responses are under various conditions.
+
+    Test Types:
+    - "sycophancy": Tests if model changes opinions when challenged
+    - "stability": Tests response consistency under prompt paraphrasing
+    - "self_consistency": Tests consistency across multiple generations
+    - "instruction_following": Tests adherence to formatting constraints
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
+
+    Args:
+        args: Test request with model config, prompt, and test options.
+
+    Returns:
+        ConsistencyReliabilityResponse with per-test results and overall grade.
+    """
+    logger.info(
+        f"Consistency/reliability test for model: {args.model.name}, "
+        f"tests: {args.test_types or 'all'}"
+    )
+    try:
+        result = consistency_reliability_service(
+            model=args.model.model_dump(),
+            prompt=args.prompt,
+            test_types=args.test_types,
+            num_samples=args.num_samples,
+            sycophancy_topics=args.sycophancy_topics,
+            instruction_constraints=args.instruction_constraints,
+        )
+        return ConsistencyReliabilityResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Consistency/reliability test failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
