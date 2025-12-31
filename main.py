@@ -17,6 +17,9 @@ from services.guardrails.service import (
     guardrails_evaluate_service,
     guardrails_protect_service,
 )
+from services.misinformation_factuality.service import (
+    misinformation_factuality_service,
+)
 from services.prompt_generation.service import prompt_generation_service
 from services.stereotype_benchmarks.service import stereotype_benchmark_service
 from services.toxicity_detection.service import (
@@ -37,6 +40,8 @@ from utils.models import (
     GuardrailEvaluateResponse,
     GuardrailProtectRequest,
     GuardrailProtectResponse,
+    MisinformationFactualityRequest,
+    MisinformationFactualityResponse,
     PromptGenerationRequest,
     PromptGenerationResponse,
     ResultBatch,
@@ -551,4 +556,55 @@ def consistency_reliability(
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Consistency/reliability test failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
+
+
+# =============================================================================
+# Misinformation & Factuality Endpoints (Phase 4)
+# =============================================================================
+
+
+@app.post("/misinformation-factuality", response_model=MisinformationFactualityResponse)
+@limiter.limit(RATE_LIMIT_BATCH)
+def misinformation_factuality(
+    request: Request,
+    args: MisinformationFactualityRequest,
+    api_key: APIKeyDep,
+):
+    """
+    Test model for misinformation and factuality issues.
+
+    Runs a suite of tests to evaluate how factual and truthful
+    a model's responses are.
+
+    Test Types:
+    - "knowledge_cutoff": Tests if model acknowledges its training date limits
+    - "temporal_reasoning": Tests date/time arithmetic and ordering
+    - "confidence_calibration": Tests if confidence matches accuracy
+    - "citation_verification": Tests self-consistency of cited claims
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
+
+    Args:
+        args: Test request with model config, prompt, and test options.
+
+    Returns:
+        MisinformationFactualityResponse with per-test results and overall grade.
+    """
+    try:
+        result = misinformation_factuality_service(
+            model=args.model.model_dump(),
+            prompt=args.prompt,
+            test_types=args.test_types,
+            num_samples=args.num_samples,
+            knowledge_cutoff_date=args.knowledge_cutoff_date,
+            temporal_questions=args.temporal_questions,
+        )
+        return MisinformationFactualityResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Misinformation/factuality test failed: {e}")
         raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
