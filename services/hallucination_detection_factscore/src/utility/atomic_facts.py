@@ -1,11 +1,10 @@
-from typing import List, Dict
+import re
+
 from ..models.open_ai import OpenAIModel
 from ..prompts.all_prompts import CONTENT_ATOMIC_FACTS
 
-import re
 
-
-def get_atomic_facts(sentences: List[str]) -> List[Dict]:
+def get_atomic_facts(sentences: list[str]) -> list[dict]:
     """
     Helper function for hallucination detection. Currently uses FActScore based
     on OpenAI API calls. Sentence is in text form, not tokenized.
@@ -40,7 +39,7 @@ def get_atomic_facts(sentences: List[str]) -> List[Dict]:
     results = []
     for key, val in atomic_facts.items():
         facts = val[0].to_dict()["choices"][0]["message"]["content"]
-        _facts = [i for i in facts.split("\n")]
+        _facts = list(facts.split("\n"))
         _facts = [re.sub(r"^[^a-zA-Z]+", "", sentence) for sentence in _facts]
         results.append({"sentence": key, "facts": _facts, "supported": []})
 

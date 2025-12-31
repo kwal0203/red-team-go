@@ -1,6 +1,8 @@
-from typing import List, Any, Dict, Optional
-from utils.config import get_openai_key
+from typing import Any
+
 from openai import OpenAI
+
+from utils.config import get_openai_key
 
 
 class OpenAIModel:
@@ -22,10 +24,10 @@ class OpenAIModel:
 
     def __init__(
         self,
-        prompts: Dict = None,
+        prompts: dict = None,
         fact_checker: bool = False,
-        name: Optional[str] = None,
-        batch_size: Optional[int] = 1,
+        name: str | None = None,
+        batch_size: int | None = 1,
     ) -> None:
         """
         Initializes the OpenAIModel class.
@@ -42,7 +44,7 @@ class OpenAIModel:
         self.name = name
         self.batch_size = batch_size
 
-    def preprocess(self, data: str) -> List[Dict]:
+    def preprocess(self, data: str) -> list[dict]:
         """
         Preprocesses input prompts to be compliant with OpenAI API.
 
@@ -76,7 +78,7 @@ class OpenAIModel:
         """
         return data
 
-    def model_predict(self, data: str) -> List[Any]:
+    def model_predict(self, data: str) -> list[Any]:
         """
         Query the OpenAI API.
 
@@ -87,7 +89,7 @@ class OpenAIModel:
         responses = self._model_predict([inputs])
         return responses
 
-    def _model_predict(self, inputs: List[Dict]) -> List[Any]:
+    def _model_predict(self, inputs: list[dict]) -> list[Any]:
         """
         Helper function for obtaining generated response from input prompts.
 
