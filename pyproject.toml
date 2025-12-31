@@ -1,2 +1,89 @@
+[project]
+name = "red-team-go"
+version = "0.1.0"
+description = "AI red teaming and safety evaluation toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "openai",
+    "pydantic",
+    "fastapi",
+    "uvicorn",
+    "python-dotenv",
+    "nltk",
+    "transformers",
+    "pymupdf",
+    "prometheus-fastapi-instrumentator",
+    "huggingface-hub",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "httpx",
+    "ruff",
+    "mypy",
+    "pre-commit",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults (needed for FastAPI Depends)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["services", "utils"]
+
+# Mypy configuration
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+# Pytest configuration
 [tool.pytest.ini_options]
 pythonpath = ["."]
+addopts = "-v --tb=short"
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests as requiring external services (deselect with '-m \"not integration\"')",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["services", "utils"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]

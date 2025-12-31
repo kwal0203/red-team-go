@@ -1,7 +1,7 @@
-from fastapi.testclient import TestClient
-from main import app
-
 import pytest
+from fastapi.testclient import TestClient
+
+from main import app
 
 
 @pytest.fixture
@@ -9,6 +9,8 @@ def client():
     return TestClient(app)
 
 
+@pytest.mark.integration
+@pytest.mark.skip(reason="Requires external HuggingFace model server on localhost:8995")
 def test_database_prompts_huggingface(client):
     model_data = {
         "name": "huggingface model",
