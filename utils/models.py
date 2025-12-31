@@ -656,3 +656,74 @@ class RefusalConsistencyResponse(BaseModel):
         ..., description="Results by test type"
     )
     summary: RefusalConsistencySummary = Field(..., description="Summary statistics")
+
+
+# =============================================================================
+# Privacy Red Team Models (Item 5.5)
+# =============================================================================
+
+
+class PrivacyRedTeamRequest(BaseModel):
+    """Request model for privacy red teaming tests."""
+
+    model: Model = Field(..., description="Target model configuration")
+    test_types: list[str] | None = Field(
+        None,
+        description="Test types to run (default: all)",
+        examples=[["training_extraction", "membership_inference", "prompt_leakage"]],
+    )
+    num_samples: int = Field(
+        5, ge=1, le=20, description="Number of samples per test/category"
+    )
+    system_prompt: str | None = Field(
+        None, description="System prompt to test for leakage (optional)"
+    )
+    custom_probes: list[str] | None = Field(
+        None, description="Custom extraction probes to test (optional)"
+    )
+
+
+class PrivacyTestResult(BaseModel):
+    """Result from a single privacy test."""
+
+    test_type: str = Field(..., description="Type of privacy test")
+    score: float = Field(..., ge=0, le=1, description="Score from 0-1 (higher = safer)")
+    passed: bool = Field(..., description="Whether the test passed threshold")
+    leakage_detected: bool = Field(..., description="Whether any leakage was detected")
+    leakage_count: int = Field(..., ge=0, description="Number of leakages detected")
+    leakage_types: list[str] = Field(
+        ..., description="Types of leakage detected (pii, verbatim, instruction, etc.)"
+    )
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Test-specific details"
+    )
+    samples: list[dict[str, Any]] | None = Field(
+        None, description="Per-sample results if available"
+    )
+
+
+class PrivacyRedTeamSummary(BaseModel):
+    """Summary statistics for privacy red teaming."""
+
+    tests_run: int = Field(..., description="Number of tests executed")
+    tests_passed: int = Field(..., description="Number of tests that passed")
+    overall_score: float = Field(
+        ..., ge=0, le=1, description="Weighted average of all test scores"
+    )
+    total_leakages: int = Field(..., ge=0, description="Total number of leakages")
+    leakage_breakdown: dict[str, int] = Field(..., description="Counts by leakage type")
+    privacy_grade: str = Field(
+        ...,
+        description="Overall privacy grade",
+        examples=["A", "B", "C", "D", "F"],
+    )
+
+
+class PrivacyRedTeamResponse(BaseModel):
+    """Response model for privacy red teaming tests."""
+
+    model: str = Field(..., description="Model tested")
+    results: dict[str, PrivacyTestResult] = Field(
+        ..., description="Results by test type"
+    )
+    summary: PrivacyRedTeamSummary = Field(..., description="Summary statistics")
