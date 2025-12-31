@@ -32,12 +32,14 @@ from utils.auth import APIKeyDep
 from utils.models import (
     AdversarialRobustnessRequest,
     AdversarialRobustnessResponse,
+    AuthErrorResponse,
     ConsistencyReliabilityRequest,
     ConsistencyReliabilityResponse,
     DetectionBatchBias,
     DetectionBatchToxicity,
     DetectionRealtimeBias,
     DetectionRealtimeToxicity,
+    ErrorResponse,
     GuardrailEvaluateRequest,
     GuardrailEvaluateResponse,
     GuardrailProtectRequest,
@@ -48,6 +50,7 @@ from utils.models import (
     PrivacyRedTeamResponse,
     PromptGenerationRequest,
     PromptGenerationResponse,
+    RateLimitErrorResponse,
     RefusalConsistencyRequest,
     RefusalConsistencyResponse,
     ResultBatch,
@@ -55,6 +58,7 @@ from utils.models import (
     ResultRealtimeToxicity,
     StereotypeBenchmarkRequest,
     StereotypeBenchmarkResponse,
+    ValidationErrorResponse,
 )
 from utils.rate_limit import (
     RATE_LIMIT_BATCH,
@@ -71,11 +75,103 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Common error responses for authenticated endpoints
+COMMON_RESPONSES = {
+    401: {"model": AuthErrorResponse, "description": "Authentication failed"},
+    422: {"model": ValidationErrorResponse, "description": "Validation error"},
+    429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    500: {"model": ErrorResponse, "description": "Internal server error"},
+}
+
+# API Tags for endpoint grouping
+TAGS_METADATA = [
+    {
+        "name": "Health",
+        "description": "Health check and status endpoints.",
+    },
+    {
+        "name": "Toxicity Detection",
+        "description": "Evaluate LLM outputs for toxic content using ensemble moderator models.",
+    },
+    {
+        "name": "Bias Detection",
+        "description": "Detect bias in LLM responses using self-evaluation methodology.",
+    },
+    {
+        "name": "Guardrails",
+        "description": "Input/output safety guardrails for jailbreak, injection, and harmful content detection.",
+    },
+    {
+        "name": "Adversarial Testing",
+        "description": "Test model robustness against adversarial perturbations and attacks.",
+    },
+    {
+        "name": "Stereotype Benchmarks",
+        "description": "Evaluate models using established stereotype and fairness benchmarks.",
+    },
+    {
+        "name": "Prompt Generation",
+        "description": "Generate adversarial prompts using LLM, Genetic Algorithm, or PAIR methods.",
+    },
+    {
+        "name": "Consistency & Reliability",
+        "description": "Test model consistency, stability, and instruction following.",
+    },
+    {
+        "name": "Misinformation & Factuality",
+        "description": "Evaluate factual accuracy, temporal reasoning, and confidence calibration.",
+    },
+    {
+        "name": "Refusal Consistency",
+        "description": "Test if models consistently refuse harmful requests under adversarial conditions.",
+    },
+    {
+        "name": "Privacy Red Team",
+        "description": "Active probing for training data extraction, membership inference, and prompt leakage.",
+    },
+]
+
 # Create FastAPI app
 app = FastAPI(
-    title="RedTeamGo",
-    description="LLM Red Teaming and Safety Evaluation API",
-    version="0.1.0",
+    title="RedTeamGo API",
+    description="""
+## LLM Red Teaming and Safety Evaluation Platform
+
+RedTeamGo provides comprehensive tools for evaluating Large Language Model (LLM) safety,
+including toxicity detection, bias analysis, adversarial robustness testing, and more.
+
+### Features
+
+- **Toxicity & Bias Detection**: Batch and realtime evaluation using ensemble models
+- **Safety Guardrails**: Input/output filtering for jailbreaks, prompt injection, harmful content
+- **Adversarial Testing**: Character, word, and semantic perturbations to test robustness
+- **Stereotype Benchmarks**: StereoSet, CrowS-Pairs, BBQ evaluation
+- **Prompt Generation**: LLM-based, Genetic Algorithm, and PAIR adversarial prompt generation
+- **Consistency Testing**: Sycophancy, stability, self-consistency, instruction following
+- **Factuality Testing**: Knowledge cutoff, temporal reasoning, confidence calibration
+- **Refusal Testing**: Paraphrase, pressure, multi-turn, context switching attacks
+- **Privacy Red Team**: Training data extraction, membership inference, prompt leakage
+
+### Authentication
+
+All endpoints (except health checks) require an API key via the `X-API-Key` header.
+
+### Rate Limits
+
+- **Batch endpoints**: 10 requests/minute
+- **Realtime endpoints**: 30 requests/minute
+- **Health endpoints**: 60 requests/minute
+""",
+    version="1.0.0",
+    openapi_tags=TAGS_METADATA,
+    contact={
+        "name": "RedTeamGo Support",
+        "url": "https://github.com/kwal0203/red-team-go",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    },
 )
 
 # Add rate limiter state to app
@@ -103,14 +199,14 @@ Instrumentator().instrument(app).expose(app)
 # =============================================================================
 
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 @limiter.limit(RATE_LIMIT_HEALTH)
 async def health_check(request: Request):
     """Health check endpoint for container orchestration."""
     return {"status": "healthy"}
 
 
-@app.get("/")
+@app.get("/", tags=["Health"])
 @limiter.limit(RATE_LIMIT_HEALTH)
 def read_root(request: Request):
     """Root endpoint returning service status."""
@@ -122,7 +218,12 @@ def read_root(request: Request):
 # =============================================================================
 
 
-@app.post("/toxicity-detection-batch", response_model=ResultBatch)
+@app.post(
+    "/toxicity-detection-batch",
+    response_model=ResultBatch,
+    tags=["Toxicity Detection"],
+    responses=COMMON_RESPONSES,
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def toxicity_detection_batch(
     request: Request,
@@ -149,7 +250,12 @@ def toxicity_detection_batch(
     return ResultBatch(result=toxicity_result)
 
 
-@app.post("/bias-detection-batch", response_model=ResultBatch)
+@app.post(
+    "/bias-detection-batch",
+    response_model=ResultBatch,
+    tags=["Bias Detection"],
+    responses=COMMON_RESPONSES,
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def bias_detection_batch(
     request: Request,
@@ -180,7 +286,15 @@ def bias_detection_batch(
 # =============================================================================
 
 
-@app.post("/toxicity-detection-realtime", response_model=ResultRealtimeToxicity)
+@app.post(
+    "/toxicity-detection-realtime",
+    response_model=ResultRealtimeToxicity,
+    tags=["Toxicity Detection"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid model configuration"},
+    },
+)
 @limiter.limit(RATE_LIMIT_REALTIME)
 def toxicity_detection_realtime(
     request: Request,
@@ -219,7 +333,15 @@ def toxicity_detection_realtime(
         ) from e
 
 
-@app.post("/bias-detection-realtime", response_model=ResultRealtimeBias)
+@app.post(
+    "/bias-detection-realtime",
+    response_model=ResultRealtimeBias,
+    tags=["Bias Detection"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid model configuration"},
+    },
+)
 @limiter.limit(RATE_LIMIT_REALTIME)
 def bias_detection_realtime(
     request: Request,
@@ -263,7 +385,15 @@ def bias_detection_realtime(
 # =============================================================================
 
 
-@app.post("/evaluate/guardrails", response_model=GuardrailEvaluateResponse)
+@app.post(
+    "/evaluate/guardrails",
+    response_model=GuardrailEvaluateResponse,
+    tags=["Guardrails"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid model configuration"},
+    },
+)
 @limiter.limit(RATE_LIMIT_REALTIME)
 def evaluate_guardrails(
     request: Request,
@@ -304,7 +434,15 @@ def evaluate_guardrails(
         ) from e
 
 
-@app.post("/protect/guardrails", response_model=GuardrailProtectResponse)
+@app.post(
+    "/protect/guardrails",
+    response_model=GuardrailProtectResponse,
+    tags=["Guardrails"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+    },
+)
 @limiter.limit(RATE_LIMIT_REALTIME)
 def protect_guardrails(
     request: Request,
@@ -350,7 +488,15 @@ def protect_guardrails(
 # =============================================================================
 
 
-@app.post("/adversarial-robustness", response_model=AdversarialRobustnessResponse)
+@app.post(
+    "/adversarial-robustness",
+    response_model=AdversarialRobustnessResponse,
+    tags=["Adversarial Testing"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+    },
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def adversarial_robustness(
     request: Request,
@@ -399,7 +545,16 @@ def adversarial_robustness(
 # =============================================================================
 
 
-@app.post("/stereotype-benchmark", response_model=StereotypeBenchmarkResponse)
+@app.post(
+    "/stereotype-benchmark",
+    response_model=StereotypeBenchmarkResponse,
+    tags=["Stereotype Benchmarks"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        501: {"model": ErrorResponse, "description": "Dataset not loaded"},
+    },
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def stereotype_benchmark(
     request: Request,
@@ -454,7 +609,16 @@ def stereotype_benchmark(
 # =============================================================================
 
 
-@app.post("/generate-adversarial-prompts", response_model=PromptGenerationResponse)
+@app.post(
+    "/generate-adversarial-prompts",
+    response_model=PromptGenerationResponse,
+    tags=["Prompt Generation"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        501: {"model": ErrorResponse, "description": "Generator not implemented"},
+    },
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def generate_adversarial_prompts(
     request: Request,
@@ -468,9 +632,11 @@ def generate_adversarial_prompts(
     and optionally evaluates them against the target model.
 
     Generators:
-    - "llm": LLM-based prompt generation (implemented)
-    - "genetic": Genetic algorithm (stub)
-    - "pair": PAIR method (stub)
+    - "llm": LLM-based prompt generation using category-specific templates
+    - "genetic": Genetic algorithm with mutation, crossover, and fitness evaluation
+    - "pair": PAIR (Prompt Automatic Iterative Refinement) method
+
+    Categories: jailbreak, harmful, bias, toxicity
 
     Requires: X-API-Key header
     Rate Limit: 10 requests/minute
@@ -515,7 +681,15 @@ def generate_adversarial_prompts(
 # =============================================================================
 
 
-@app.post("/consistency-reliability", response_model=ConsistencyReliabilityResponse)
+@app.post(
+    "/consistency-reliability",
+    response_model=ConsistencyReliabilityResponse,
+    tags=["Consistency & Reliability"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+    },
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def consistency_reliability(
     request: Request,
@@ -570,7 +744,15 @@ def consistency_reliability(
 # =============================================================================
 
 
-@app.post("/misinformation-factuality", response_model=MisinformationFactualityResponse)
+@app.post(
+    "/misinformation-factuality",
+    response_model=MisinformationFactualityResponse,
+    tags=["Misinformation & Factuality"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+    },
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def misinformation_factuality(
     request: Request,
@@ -621,7 +803,15 @@ def misinformation_factuality(
 # =============================================================================
 
 
-@app.post("/refusal-consistency", response_model=RefusalConsistencyResponse)
+@app.post(
+    "/refusal-consistency",
+    response_model=RefusalConsistencyResponse,
+    tags=["Refusal Consistency"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request parameters"},
+    },
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def refusal_consistency(
     request: Request,
@@ -676,7 +866,15 @@ def refusal_consistency(
 # =============================================================================
 
 
-@app.post("/privacy-redteam", response_model=PrivacyRedTeamResponse)
+@app.post(
+    "/privacy-redteam",
+    response_model=PrivacyRedTeamResponse,
+    tags=["Privacy Red Team"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request parameters"},
+    },
+)
 @limiter.limit(RATE_LIMIT_BATCH)
 def privacy_redteam(
     request: Request,
