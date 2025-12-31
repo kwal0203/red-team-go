@@ -1,60 +1,46 @@
 from typing import Any
-import streamlit as st
 import random
 
+from src.context import SemanticEntropyContext
 
-def response_generator(model_name: str, prompt: str) -> Any:
+
+def response_generator(context: SemanticEntropyContext, prompt: str) -> Any:
     """
-    This function enters input prompts into the selected model and obtains the generated responses.
+    Generate a response from the model with logprobs for semantic entropy calculation.
 
     Args:
-        prompt (str): TODO.
+        context: SemanticEntropyContext containing model client and configuration.
+        prompt: The input prompt to generate a response for.
+
+    Returns:
+        The model response object with logprobs.
     """
+    if context.model_name == "llama3-instruct":
+        if context.one_shot and context.prompts:
+            # One-shot mode with random prompt selection
+            response = context.model_client.model_predict(
+                data=random.choice(context.prompts)
+            )
+        else:
+            # Standard prediction
+            response = context.model_client.model_predict(data=[prompt])
+    else:
+        # OpenAI-compatible API (GPT models)
+        if context.one_shot and context.prompts:
+            messages = [{"role": "user", "content": random.choice(context.prompts)}]
+        elif context.messages:
+            messages = [
+                {"role": m["role"], "content": m["content"]}
+                for m in context.messages
+            ]
+        else:
+            messages = [{"role": "user", "content": prompt}]
 
-    # NOTE: Code currently broken:
-    #   - Refactor code to remove session_state from the streamlit front end
-
-    if model_name != "llama3-instruct":
-        print("A")
-        stream = session_state.model_client.chat.completions.create(
-            model=session_state.model_name,
-            messages=[{"role": "user", "content": prompt}],
+        response = context.model_client.chat.completions.create(
+            model=context.model_name,
+            messages=messages,
             stream=False,
             logprobs=True,
         )
-    elif session_state.model_name == "gpt-3.5-turbo" and session_state.one_shot == True:
-        print("B")
-        stream = session_state.model_client.chat.completions.create(
-            model=session_state.model_name,
-            messages=[
-                {"role": "user", "content": random.choice(session_state.prompts)}
-            ],
-            stream=True,
-        )
-    elif (
-        session_state.model_name == "llama3-instruct" and session_state.one_shot == True
-    ):
-        # Is this for the batch process?
-        print("C")
-        stream = session_state.model_client.model_predict(
-            data=random.choice(session_state.prompts)
-        )
-    elif (
-        session_state.model_name == "llama3-instruct"
-        and session_state.one_shot == False
-    ):
-        print("D")
-        # Is this for the batch process?
-        stream = session_state.model_client.model_predict(data=[prompt])
-    else:
-        print("E")
-        stream = session_state.model_client.chat.completions.create(
-            model=session_state.model_name,
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in session_state.messages
-            ],
-            stream=True,
-        )
 
-    return stream
+    return response
