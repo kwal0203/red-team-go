@@ -1,0 +1,1 @@
+"""Stereotype benchmarks source module."""
