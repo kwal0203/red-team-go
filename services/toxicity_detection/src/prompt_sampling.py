@@ -1,9 +1,7 @@
-from typing import List
-
 import sqlite3
 
 
-def get_random_samples(db_path, num_samples_per_dataset=10) -> List:
+def get_random_samples(db_path, num_samples_per_dataset=10) -> list:
     """
     Retrieves random samples from the database, with an equal number from each dataset.
 
@@ -48,7 +46,7 @@ def get_random_samples(db_path, num_samples_per_dataset=10) -> List:
         return []
 
 
-def get_samples(db_path: str, num_samples: int) -> List:
+def get_samples(db_path: str, num_samples: int) -> list:
     """
     Retrieves rows from the database starting from the first row, up to num_samples rows.
 
