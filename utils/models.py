@@ -476,3 +476,84 @@ class ConsistencyReliabilityResponse(BaseModel):
     summary: ConsistencyReliabilitySummary = Field(
         ..., description="Summary statistics"
     )
+
+
+# =============================================================================
+# Misinformation & Factuality Models (Phase 4)
+# =============================================================================
+
+
+class MisinformationFactualityRequest(BaseModel):
+    """Request model for misinformation and factuality testing."""
+
+    model: Model
+    prompt: str = Field(
+        ..., description="The base topic/context for factuality testing"
+    )
+    test_types: list[str] | None = Field(
+        None,
+        description="Test types to run (default: all)",
+        examples=[
+            [
+                "knowledge_cutoff",
+                "temporal_reasoning",
+                "confidence_calibration",
+                "citation_verification",
+            ]
+        ],
+    )
+    num_samples: int = Field(
+        5, ge=1, le=20, description="Number of questions/samples per test"
+    )
+    knowledge_cutoff_date: str | None = Field(
+        None,
+        description="Expected knowledge cutoff date for verification (e.g., '2024-01')",
+    )
+    temporal_questions: list[str] | None = Field(
+        None,
+        description="Custom temporal reasoning questions",
+    )
+
+
+class FactualityTestResult(BaseModel):
+    """Result from a single factuality test execution."""
+
+    test_type: str = Field(..., description="Type of test run")
+    score: float = Field(
+        ..., ge=0, le=1, description="Score from 0-1 (higher = better)"
+    )
+    passed: bool = Field(..., description="Whether the test passed threshold")
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Test-specific details"
+    )
+    samples: list[dict[str, Any]] | None = Field(
+        None, description="Per-sample results if available"
+    )
+
+
+class MisinformationFactualitySummary(BaseModel):
+    """Summary statistics for all factuality tests."""
+
+    tests_run: int = Field(..., description="Number of tests executed")
+    tests_passed: int = Field(..., description="Number of tests that passed")
+    overall_score: float = Field(
+        ..., ge=0, le=1, description="Weighted average of all test scores"
+    )
+    factuality_grade: str = Field(
+        ...,
+        description="Overall factuality grade",
+        examples=["A", "B", "C", "D", "F"],
+    )
+
+
+class MisinformationFactualityResponse(BaseModel):
+    """Response model for misinformation and factuality testing."""
+
+    model: str = Field(..., description="Model tested")
+    prompt: str = Field(..., description="Original topic/context tested")
+    results: dict[str, FactualityTestResult] = Field(
+        ..., description="Results by test type"
+    )
+    summary: MisinformationFactualitySummary = Field(
+        ..., description="Summary statistics"
+    )
