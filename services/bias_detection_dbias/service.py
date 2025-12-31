@@ -1,54 +1,76 @@
-from services.bias_detection_dbias.src.bias_detection import detect_bias
-from typing import Dict, Any, Optional, List
-from utils.models import Model
+"""Bias detection service for evaluating LLM responses."""
+
+import logging
+import os
+from typing import Any
+
+from services.bias_detection_dbias.src.bias_detection import (
+    detect_bias,
+    detect_bias_single,
+)
 from services.bias_detection_dbias.src.prompt_sampling import (
     get_random_samples,
     get_samples,
 )
-from services.model_wrappers.model_openai import APIModelOpenai
 from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
+from services.model_wrappers.model_openai import APIModelOpenai
+from utils.models import BiasScore, Model, ResultRealtimeBias
 
-import os
+logger = logging.getLogger(__name__)
 
 
-def dbias_service(
-    model: Model,
-    num_samples: int,
-    random: Optional[bool] = True,
-    database_prompts: Optional[bool] = True,
-    user_prompts: Optional[List[str]] = None,
-    user_topics: Optional[List[str]] = None,
-) -> Dict[str, Any]:
-    # TODO: Convert to Google style comments
-
-    ### Bias detection service using the Dbias model (Raza, Int J Data Sci Anal 2024).
-    ### Instantiate target model
+def _create_target_model(model: Model):
+    """Create the appropriate model wrapper based on model configuration."""
     if "openai" in model["name"]:
-        print("----- bias_detection_service: OPENAI")
-        target_model = APIModelOpenai(
-            name=model["name"], description=model["description"]
-        )
+        logger.info("Creating OpenAI model wrapper")
+        return APIModelOpenai(name=model["name"], description=model["description"])
     elif "huggingface" in model["name"]:
-        target_model = APIModelHuggingFace(
+        logger.info("Creating HuggingFace model wrapper")
+        return APIModelHuggingFace(
             base_url=model["base_url"],
             name=model["name"],
             description=model["description"],
         )
     else:
-        print(f"ERROR: 'openai' or 'huggingface' must be in the model name.")
-        return {
-            "toxicity_evaluation": "ERROR: 'openai' or 'huggingface' must be in the model name."
-        }
+        raise ValueError(
+            f"Invalid model name '{model['name']}': must contain 'openai' or 'huggingface'"
+        )
 
-    ### Instantiate red team data samples
+
+def dbias_service(
+    model: Model,
+    num_samples: int,
+    random: bool | None = True,
+    database_prompts: bool | None = True,
+    user_prompts: list[str] | None = None,
+    user_topics: list[str] | None = None,
+) -> dict[str, Any]:
+    """
+    Batch bias detection service using DBias methodology.
+
+    Based on: Raza et al. "Dbias: detecting biases and ensuring fairness in news articles"
+    Int J Data Sci Anal 17, 39-59 (2024).
+
+    Args:
+        model: Target LLM configuration.
+        num_samples: Number of samples to evaluate.
+        random: Whether to randomly sample from database.
+        database_prompts: Whether to use prompts from the database.
+        user_prompts: Optional list of user-provided prompts.
+        user_topics: Optional list of topics to generate prompts for.
+
+    Returns:
+        Dictionary containing bias evaluation results.
+    """
+    try:
+        target_model = _create_target_model(model)
+    except ValueError as e:
+        logger.error(str(e))
+        return {"bias_evaluation": str(e)}
+
+    # Get prompts from appropriate source
     if database_prompts:
-        # Grab num_samples random entries from the database
-        # TODO: Turn the database into a service served through API, remove
-        #       hard coded dp_path.
-        print("----- bias_detection_service: DATABASE")
-
-        # NOTE: Currenlty using the toxicity database. Need to create a new
-        #       database for bias detection.
+        logger.info("Loading prompts from database")
         db_path = f"{os.getcwd()}/data/red_team_prompt_database.db"
         if random:
             inputs = get_random_samples(
@@ -61,17 +83,51 @@ def dbias_service(
                 num_samples_per_dataset=num_samples,
             )
     elif user_prompts:
-        # User provided prompts
-        print("----- automated_bias_detection_service: PROMPTS_NOT_IMPLEMENTED")
-        return {"bias_evaluation": {}}
+        logger.info("Using user-provided prompts")
+        # Convert user prompts to expected format
+        inputs = [{"dataset": "user_provided", "prompt": p} for p in user_prompts]
     elif user_topics:
-        # Generate LLM inputs from user provided topics
-        print("----- automated_bias_detection_service: TOPICS_NOT_IMPLEMENTED")
-        return {"bias_evaluation": {}}
+        # TODO: Implement topic-based prompt generation
+        logger.warning("Topic-based prompt generation not yet implemented")
+        return {"bias_evaluation": "Topic-based generation not implemented"}
     else:
-        print("ERROR: INPUTS MUST BE GENERATED OR COME FROM DATABASE")
-        return {"bias_evaluation": {}}
+        logger.error("No input source specified")
+        return {"bias_evaluation": "Error: No input source specified"}
 
-    ### Perform bias evaluation
+    # Perform bias evaluation
     results = detect_bias(model=target_model, inputs=inputs)
     return {"bias_evaluation": results}
+
+
+def bias_detection_realtime_service(
+    model: Model,
+    prompt: str,
+) -> ResultRealtimeBias:
+    """
+    Realtime bias detection service for a single prompt.
+
+    Sends the prompt to the target model, evaluates the response for bias
+    using self-evaluation, and returns both the response and bias assessment.
+
+    Args:
+        model: Target LLM configuration.
+        prompt: The prompt to send to the model and evaluate.
+
+    Returns:
+        ResultRealtimeBias containing the prompt, response, and bias assessment.
+    """
+    # Create target model
+    target_model = _create_target_model(model)
+
+    # Get model response and evaluate for bias
+    logger.info(f"Sending prompt to target model: {model['name']}")
+    result = detect_bias_single(model=target_model, prompt=prompt)
+
+    return ResultRealtimeBias(
+        prompt=prompt,
+        model_response=result["model_response"],
+        bias=BiasScore(
+            bias_detected=result["bias_detected"],
+            explanation=result["explanation"],
+        ),
+    )
