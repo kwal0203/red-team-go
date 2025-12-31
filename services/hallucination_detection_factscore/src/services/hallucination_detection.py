@@ -1,23 +1,57 @@
-from typing import Dict, List
+"""FActScore hallucination detection service."""
+
+import logging
+from typing import Any
+
 from ..models.open_ai import OpenAIModel
-from ..prompts.all_prompts import CONTENT_FACT_CHECKER
+from ..prompts.all_prompts import get_fact_checker_prompts
+
+logger = logging.getLogger(__name__)
 
 
-def detect(source: str, atomic_facts: List[Dict]) -> Dict:
-    # Go through atomic facts to see which are supported
+def detect(
+    source: str,
+    atomic_facts: list[dict[str, Any]],
+    domain: str | None = None,
+) -> dict[str, Any]:
+    """
+    Detect hallucinations by checking if atomic facts are supported by evidence.
+
+    Uses the FActScore methodology (Min et al., 2023) to evaluate factual precision.
+
+    Args:
+        source: The evidence/source text to check facts against.
+        atomic_facts: List of dicts with 'sentence' and 'facts' keys.
+        domain: Optional domain restriction (e.g., "genomics", "medicine").
+                If provided, facts outside this domain are marked as unsupported.
+
+    Returns:
+        Dictionary with sentences, per-sentence scores, and overall factscore.
+    """
+    # Get prompts with optional domain restriction
+    prompts = get_fact_checker_prompts(domain=domain)
+
     model = OpenAIModel(
-        # model="fact_checker",
         name="gpt-3.5-turbo",
-        prompts=CONTENT_FACT_CHECKER,
+        prompts=prompts,
         fact_checker=True,
     )
 
-    atomic_facts[0]["facts"].append("My dog went for a walk.")
+    results: dict[str, dict[str, Any]] = {}
 
-    results = {}
     for item in atomic_facts:
         sentence = item["sentence"]
         facts = item["facts"]
+
+        # Filter out empty facts
+        facts = [f.strip() for f in facts if f.strip()]
+
+        if not facts:
+            logger.warning(
+                f"No valid facts extracted from sentence: {sentence[:50]}..."
+            )
+            continue
+
         if sentence not in results:
             results[sentence] = {"facts": facts, "supported": []}
 
@@ -27,38 +61,56 @@ def detect(source: str, atomic_facts: List[Dict]) -> Dict:
                 "fact": fact,
             }
 
-            response = model.model_predict(data=evidence_and_fact)
-            supported = (
-                response[0].to_dict()["choices"][0]["message"]["content"].lower()
-            )
+            try:
+                response = model.model_predict(data=evidence_and_fact)
+                response_text = (
+                    response[0].to_dict()["choices"][0]["message"]["content"].lower()
+                )
+                fact_supported = "true" in response_text
+            except Exception as e:
+                logger.error(f"Error checking fact '{fact[:50]}...': {e}")
+                fact_supported = False
 
-            fact_supported = True if "true" in supported else False
-            if fact_supported:
-                results[sentence]["supported"].append(True)
-            else:
-                results[sentence]["supported"].append(False)
+            results[sentence]["supported"].append(fact_supported)
 
-    # LLM-based approach to hallucination detection
-    # Fact score from:
-    # FActScore: Fine-grained Atomic Evaluation of Factual Precision in Long
-    # Form Text Generation (Min, 2023)
-    result_json = {"sentences": [], "scores": []}
+    # Calculate per-sentence and overall scores
+    result_json: dict[str, Any] = {
+        "sentences": [],
+        "scores": [],
+        "details": [],
+    }
 
-    for sentence in results.keys():
-        facts = results[sentence]["facts"]
-        supported = results[sentence]["supported"]
-        true = sum([1 for fact_supported in supported if fact_supported])
+    for sentence, data in results.items():
+        facts = data["facts"]
+        supported = data["supported"]
+
+        if not facts:
+            continue
+
+        true_count = sum(1 for s in supported if s)
         total = len(facts)
+        score = int(true_count / total * 100) if total > 0 else 0
+
         result_json["sentences"].append(sentence)
-
-        score = int(true / total * 100)
-        if score == 0:
-            # score == 0 was doing something weird on the front end
-            score = 1
         result_json["scores"].append(score)
-    print()
+        result_json["details"].append(
+            {
+                "sentence": sentence,
+                "facts": facts,
+                "supported": supported,
+                "supported_count": true_count,
+                "total_facts": total,
+            }
+        )
 
-    factscore = int(sum(result_json["scores"]) / len(result_json["scores"]))
+    # Calculate overall FActScore
+    if result_json["scores"]:
+        factscore = int(sum(result_json["scores"]) / len(result_json["scores"]))
+    else:
+        factscore = 0
+        logger.warning("No sentences with valid facts found")
 
     result_json["factscore"] = factscore
+    result_json["domain"] = domain
+
     return result_json
