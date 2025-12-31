@@ -10,6 +10,10 @@ from services.bias_detection_dbias.service import (
     bias_detection_realtime_service,
     dbias_service,
 )
+from services.guardrails.service import (
+    guardrails_evaluate_service,
+    guardrails_protect_service,
+)
 from services.toxicity_detection.service import (
     toxicity_detection_realtime_service,
     toxicity_detection_service,
@@ -19,6 +23,10 @@ from utils.models import (
     DetectionBatchToxicity,
     DetectionRealtimeBias,
     DetectionRealtimeToxicity,
+    GuardrailEvaluateRequest,
+    GuardrailEvaluateResponse,
+    GuardrailProtectRequest,
+    GuardrailProtectResponse,
     ResultBatch,
     ResultRealtimeBias,
     ResultRealtimeToxicity,
@@ -175,4 +183,75 @@ def bias_detection_realtime(args: DetectionRealtimeBias):
         logger.error(f"Bias detection failed: {e}")
         raise HTTPException(
             status_code=500, detail=f"Detection failed: {str(e)}"
+        ) from e
+
+
+# =============================================================================
+# Guardrail Endpoints
+# =============================================================================
+
+
+@app.post("/evaluate/guardrails", response_model=GuardrailEvaluateResponse)
+def evaluate_guardrails(args: GuardrailEvaluateRequest):
+    """
+    Evaluate guardrails for red-team testing.
+
+    Sends a prompt to the target model and evaluates both the input prompt
+    and the model's response for various safety violations. Use this to test
+    whether a model's guardrails can be bypassed.
+
+    Args:
+        args: Evaluation request with model config, prompt, and optional guardrail filter.
+
+    Returns:
+        GuardrailEvaluateResponse with input/output analysis and bypassed guardrails.
+    """
+    logger.info(f"Guardrail evaluation request for model: {args.model.name}")
+    try:
+        result = guardrails_evaluate_service(
+            model=args.model.model_dump(),
+            prompt=args.prompt,
+            guardrails=args.guardrails,
+        )
+        return GuardrailEvaluateResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid model configuration: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Guardrail evaluation failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Evaluation failed: {str(e)}"
+        ) from e
+
+
+@app.post("/protect/guardrails", response_model=GuardrailProtectResponse)
+def protect_guardrails(args: GuardrailProtectRequest):
+    """
+    Protect mode guardrail check for production middleware.
+
+    Checks input and/or output text for safety violations and applies
+    the specified remediation action (block, flag, or redact).
+
+    Args:
+        args: Protect request with input/output text and action to take.
+
+    Returns:
+        GuardrailProtectResponse with safety status and any remediated content.
+    """
+    logger.info(f"Guardrail protect request with action: {args.action}")
+    try:
+        result = guardrails_protect_service(
+            input_text=args.input_text,
+            output_text=args.output_text,
+            action=args.action,
+            guardrails=args.guardrails,
+        )
+        return GuardrailProtectResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Guardrail protect check failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Protection check failed: {str(e)}"
         ) from e

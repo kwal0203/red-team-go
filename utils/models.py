@@ -138,3 +138,95 @@ class ManualDetection(BaseModel):
     """For use in realtime setting (i.e. when chatting)."""
 
     prompt: UserPrompt
+
+
+# =============================================================================
+# Guardrail Models
+# =============================================================================
+
+
+class GuardrailCheck(BaseModel):
+    """Result from a single guardrail check."""
+
+    name: str = Field(..., description="Guardrail identifier (e.g., 'jailbreak')")
+    detected: bool = Field(..., description="Whether a violation was detected")
+    confidence: float = Field(
+        ..., ge=0, le=1, description="Confidence score for the detection"
+    )
+    explanation: str = Field(..., description="Short description of why flagged")
+    category: str | None = Field(None, description="Sub-category if applicable")
+
+
+class GuardrailEvaluateRequest(BaseModel):
+    """Request model for guardrail evaluation (red-team testing)."""
+
+    model: Model
+    prompt: str = Field(..., description="The prompt to send to the model and evaluate")
+    guardrails: list[str] | None = Field(
+        None,
+        description="List of guardrails to apply. If None, uses all available.",
+        examples=[["jailbreak", "injection", "toxicity", "harmful_content"]],
+    )
+
+
+class GuardrailEvaluateResponse(BaseModel):
+    """Response model for guardrail evaluation."""
+
+    prompt: str = Field(..., description="The original prompt")
+    model_response: str = Field(..., description="The model's response")
+    input_analysis: dict[str, GuardrailCheck] = Field(
+        ..., description="Guardrail results for the input prompt"
+    )
+    output_analysis: dict[str, GuardrailCheck] = Field(
+        ..., description="Guardrail results for the model response"
+    )
+    overall_risk: str = Field(
+        ...,
+        description="Aggregated risk level",
+        examples=["low", "medium", "high", "critical"],
+    )
+    guardrails_bypassed: list[str] = Field(
+        ..., description="List of guardrails that detected violations in output"
+    )
+
+
+class GuardrailProtectRequest(BaseModel):
+    """Request model for guardrail protection (production middleware)."""
+
+    input_text: str | None = Field(None, description="Input text to check")
+    output_text: str | None = Field(None, description="Output text to check")
+    action: str = Field(
+        "redact",
+        description="Remediation action to take",
+        examples=["block", "flag", "redact"],
+    )
+    guardrails: list[str] | None = Field(
+        None,
+        description="List of guardrails to apply. If None, uses all available.",
+    )
+
+
+class GuardrailRemediationInfo(BaseModel):
+    """Information about remediation action taken."""
+
+    action_taken: str = Field(..., description="The action that was applied")
+    explanation: str = Field(..., description="Description of what was done")
+
+
+class GuardrailProtectResponse(BaseModel):
+    """Response model for guardrail protection."""
+
+    allowed: bool = Field(..., description="Whether content should be allowed through")
+    input_safe: bool = Field(
+        ..., description="Whether input passed checks (if provided)"
+    )
+    output_safe: bool = Field(
+        ..., description="Whether output passed checks (if provided)"
+    )
+    violations: list[str] = Field(..., description="List of all violations found")
+    remediated_output: str | None = Field(
+        None, description="Modified output if redaction was applied"
+    )
+    remediation: GuardrailRemediationInfo | None = Field(
+        None, description="Details about remediation action taken"
+    )
