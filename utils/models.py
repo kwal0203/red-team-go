@@ -230,3 +230,175 @@ class GuardrailProtectResponse(BaseModel):
     remediation: GuardrailRemediationInfo | None = Field(
         None, description="Details about remediation action taken"
     )
+
+
+# =============================================================================
+# Adversarial Robustness Models (Phase 3, Item 9)
+# =============================================================================
+
+
+class AdversarialRobustnessRequest(BaseModel):
+    """Request model for adversarial robustness testing."""
+
+    model: Model
+    prompt: str = Field(..., description="The prompt to test with perturbations")
+    perturbation_types: list[str] | None = Field(
+        None,
+        description="Perturbation types to apply",
+        examples=[["character", "word", "semantic"]],
+    )
+    num_variants: int = Field(
+        5, ge=1, le=20, description="Number of variants per perturbation type"
+    )
+
+
+class PerturbationVariant(BaseModel):
+    """A single perturbed variant and its evaluation."""
+
+    perturbation_type: str = Field(..., description="Type of perturbation applied")
+    method: str = Field(..., description="Specific method used")
+    perturbed_prompt: str = Field(..., description="The modified prompt")
+    model_response: str = Field(..., description="Model's response to the variant")
+    blocked: bool = Field(..., description="Whether the model refused")
+    bypass_successful: bool = Field(
+        ..., description="Whether this variant bypassed safety"
+    )
+    changes: list[str] = Field(
+        default_factory=list, description="Changes made to original"
+    )
+
+
+class AdversarialRobustnessSummary(BaseModel):
+    """Summary statistics for robustness testing."""
+
+    total_variants: int = Field(..., description="Total variants tested")
+    bypasses: int = Field(..., description="Number of successful bypasses")
+    bypass_rate: float = Field(
+        ..., ge=0, le=1, description="Rate of successful bypasses"
+    )
+    most_effective_type: str | None = Field(
+        None, description="Most effective perturbation type"
+    )
+
+
+class AdversarialRobustnessResponse(BaseModel):
+    """Response model for adversarial robustness testing."""
+
+    original_prompt: str = Field(..., description="The original prompt")
+    original_blocked: bool = Field(..., description="Whether original would be blocked")
+    variants: list[PerturbationVariant] = Field(..., description="All tested variants")
+    summary: AdversarialRobustnessSummary = Field(..., description="Summary statistics")
+
+
+# =============================================================================
+# Stereotype Benchmark Models (Phase 3, Item 10)
+# =============================================================================
+
+
+class StereotypeBenchmarkRequest(BaseModel):
+    """Request model for stereotype benchmark evaluation."""
+
+    model: Model
+    benchmark: str = Field(
+        ...,
+        description="Benchmark to use",
+        examples=["stereoset", "crows_pairs", "bbq"],
+    )
+    num_samples: int | None = Field(
+        None, ge=1, description="Number of samples to evaluate"
+    )
+    bias_types: list[str] | None = Field(
+        None,
+        description="Filter to specific bias types",
+        examples=[["gender", "race", "religion"]],
+    )
+    include_samples: bool = Field(False, description="Include per-sample results")
+
+
+class BiasTypeMetrics(BaseModel):
+    """Metrics for a specific bias type."""
+
+    stereotype_score: float = Field(
+        ..., ge=0, le=1, description="Score indicating stereotype preference"
+    )
+    num_samples: int = Field(..., description="Number of samples evaluated")
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metric details"
+    )
+
+
+class StereotypeBenchmarkResponse(BaseModel):
+    """Response model for stereotype benchmark evaluation."""
+
+    benchmark: str = Field(..., description="Benchmark used")
+    model: str = Field(..., description="Model evaluated")
+    num_samples: int = Field(..., description="Total samples evaluated")
+    metrics: dict[str, Any] = Field(..., description="Overall metrics")
+    by_bias_type: dict[str, BiasTypeMetrics] = Field(
+        ..., description="Metrics by bias type"
+    )
+    sample_results: list[dict[str, Any]] | None = Field(
+        None, description="Per-sample results if requested"
+    )
+
+
+# =============================================================================
+# Prompt Generation Models (Phase 3, Item 11)
+# =============================================================================
+
+
+class PromptGenerationRequest(BaseModel):
+    """Request model for adversarial prompt generation."""
+
+    model: Model
+    target_category: str = Field(
+        ...,
+        description="Category of prompts to generate",
+        examples=["jailbreak", "harmful", "bias", "toxicity"],
+    )
+    generator: str = Field(
+        "llm",
+        description="Generator method to use",
+        examples=["llm", "genetic", "pair"],
+    )
+    num_prompts: int = Field(
+        10, ge=1, le=50, description="Number of prompts to generate"
+    )
+    seed_prompt: str | None = Field(
+        None, description="Optional seed prompt for generation"
+    )
+    evaluate: bool = Field(
+        True, description="Whether to evaluate prompts against target model"
+    )
+
+
+class GeneratedPromptResult(BaseModel):
+    """A generated prompt with optional evaluation."""
+
+    prompt: str = Field(..., description="The generated prompt")
+    generation_method: str = Field(..., description="Method used to generate")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Generation metadata"
+    )
+    evaluation: dict[str, Any] | None = Field(
+        None, description="Evaluation results if evaluated"
+    )
+
+
+class PromptGenerationSummary(BaseModel):
+    """Summary statistics for prompt generation."""
+
+    total_generated: int = Field(..., description="Total prompts generated")
+    successful_bypasses: int = Field(0, description="Number of successful bypasses")
+    bypass_rate: float = Field(0, ge=0, le=1, description="Rate of successful bypasses")
+
+
+class PromptGenerationResponse(BaseModel):
+    """Response model for prompt generation."""
+
+    generator: str = Field(..., description="Generator method used")
+    target_category: str = Field(..., description="Target category")
+    prompts: list[GeneratedPromptResult] = Field(
+        ..., description="Generated prompts with evaluations"
+    )
+    summary: PromptGenerationSummary = Field(..., description="Summary statistics")

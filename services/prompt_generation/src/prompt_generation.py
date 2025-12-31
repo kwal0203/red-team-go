@@ -1,15 +1,16 @@
-from services.model_wrappers.model_huggingface import HuggingFaceModel
-from utils.text_generation import generate_text
-from typing import List, Dict, Any
-from utils.config import device
+import random
+from typing import Any
 
 import numpy as np
-import random
+
+from services.model_wrappers.model_huggingface import HuggingFaceModel
+from utils.config import device
+from utils.text_generation import generate_text
 
 
 def generate_zero_shot_inputs(
-    topics: List[str], num_samples: int, red_lm: HuggingFaceModel, local: bool
-) -> List[str]:
+    topics: list[str], num_samples: int, red_lm: HuggingFaceModel, local: bool
+) -> list[str]:
     # top_p = 0.95 and top_k = 0 makes this nucleus sampling
     generated_questions = []
     for _ in range(num_samples):
@@ -35,7 +36,7 @@ def generate_zero_shot_inputs(
     return generated_questions
 
 
-def generate_few_shot_inputs(red_lm: Any, num_test_cases: int, df_toxicity: Dict):
+def generate_few_shot_inputs(red_lm: Any, num_test_cases: int, df_toxicity: dict):
     temperature = 1 / 10
     df_toxicity["toxicity_score_for_sampling"] = (
         df_toxicity["toxicity_score"] / temperature

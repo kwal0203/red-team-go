@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
+from services.adversarial_robustness.service import adversarial_robustness_service
 from services.bias_detection_dbias.service import (
     bias_detection_realtime_service,
     dbias_service,
@@ -14,11 +15,15 @@ from services.guardrails.service import (
     guardrails_evaluate_service,
     guardrails_protect_service,
 )
+from services.prompt_generation.service import prompt_generation_service
+from services.stereotype_benchmarks.service import stereotype_benchmark_service
 from services.toxicity_detection.service import (
     toxicity_detection_realtime_service,
     toxicity_detection_service,
 )
 from utils.models import (
+    AdversarialRobustnessRequest,
+    AdversarialRobustnessResponse,
     DetectionBatchBias,
     DetectionBatchToxicity,
     DetectionRealtimeBias,
@@ -27,9 +32,13 @@ from utils.models import (
     GuardrailEvaluateResponse,
     GuardrailProtectRequest,
     GuardrailProtectResponse,
+    PromptGenerationRequest,
+    PromptGenerationResponse,
     ResultBatch,
     ResultRealtimeBias,
     ResultRealtimeToxicity,
+    StereotypeBenchmarkRequest,
+    StereotypeBenchmarkResponse,
 )
 
 # Configure logging
@@ -254,4 +263,145 @@ def protect_guardrails(args: GuardrailProtectRequest):
         logger.error(f"Guardrail protect check failed: {e}")
         raise HTTPException(
             status_code=500, detail=f"Protection check failed: {str(e)}"
+        ) from e
+
+
+# =============================================================================
+# Adversarial Robustness Endpoints (Phase 3, Item 9)
+# =============================================================================
+
+
+@app.post("/adversarial-robustness", response_model=AdversarialRobustnessResponse)
+def adversarial_robustness(args: AdversarialRobustnessRequest):
+    """
+    Test adversarial robustness of model guardrails.
+
+    Applies various text perturbations (character-level, word-level, semantic)
+    to test if safety guardrails can be bypassed.
+
+    Args:
+        args: Robustness test request with model config, prompt, and perturbation settings.
+
+    Returns:
+        AdversarialRobustnessResponse with all variants tested and bypass statistics.
+    """
+    logger.info(
+        f"Adversarial robustness test for model: {args.model.name}, "
+        f"perturbations: {args.perturbation_types}"
+    )
+    try:
+        result = adversarial_robustness_service(
+            model=args.model.model_dump(),
+            prompt=args.prompt,
+            perturbation_types=args.perturbation_types,
+            num_variants=args.num_variants,
+        )
+        return AdversarialRobustnessResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Adversarial robustness test failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Robustness test failed: {str(e)}"
+        ) from e
+
+
+# =============================================================================
+# Stereotype Benchmark Endpoints (Phase 3, Item 10)
+# =============================================================================
+
+
+@app.post("/stereotype-benchmark", response_model=StereotypeBenchmarkResponse)
+def stereotype_benchmark(args: StereotypeBenchmarkRequest):
+    """
+    Evaluate model for stereotypical biases using established benchmarks.
+
+    Supports StereoSet, CrowS-Pairs, and BBQ benchmarks.
+    Note: Full datasets must be loaded separately. Uses sample data by default.
+
+    Args:
+        args: Benchmark request with model config, benchmark name, and optional filters.
+
+    Returns:
+        StereotypeBenchmarkResponse with stereotype scores and per-bias-type metrics.
+    """
+    logger.info(
+        f"Stereotype benchmark for model: {args.model.name}, "
+        f"benchmark: {args.benchmark}"
+    )
+    try:
+        result = stereotype_benchmark_service(
+            model=args.model.model_dump(),
+            benchmark=args.benchmark,
+            num_samples=args.num_samples,
+            bias_types=args.bias_types,
+            include_samples=args.include_samples,
+        )
+        return StereotypeBenchmarkResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except NotImplementedError as e:
+        logger.warning(f"Dataset not loaded: {e}")
+        raise HTTPException(
+            status_code=501, detail=f"Dataset not loaded: {str(e)}"
+        ) from e
+    except Exception as e:
+        logger.error(f"Stereotype benchmark failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Benchmark failed: {str(e)}"
+        ) from e
+
+
+# =============================================================================
+# Prompt Generation Endpoints (Phase 3, Item 11)
+# =============================================================================
+
+
+@app.post("/generate-adversarial-prompts", response_model=PromptGenerationResponse)
+def generate_adversarial_prompts(args: PromptGenerationRequest):
+    """
+    Generate adversarial prompts for red-teaming LLMs.
+
+    Uses the specified generator method to create adversarial prompts
+    and optionally evaluates them against the target model.
+
+    Generators:
+    - "llm": LLM-based prompt generation (implemented)
+    - "genetic": Genetic algorithm (stub)
+    - "pair": PAIR method (stub)
+
+    Args:
+        args: Generation request with model config, category, generator, and settings.
+
+    Returns:
+        PromptGenerationResponse with generated prompts and bypass statistics.
+    """
+    logger.info(
+        f"Prompt generation for model: {args.model.name}, "
+        f"category: {args.target_category}, generator: {args.generator}"
+    )
+    try:
+        result = prompt_generation_service(
+            model=args.model.model_dump(),
+            target_category=args.target_category,
+            generator=args.generator,
+            num_prompts=args.num_prompts,
+            seed_prompt=args.seed_prompt,
+            evaluate=args.evaluate,
+        )
+        return PromptGenerationResponse(**result)
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except NotImplementedError as e:
+        logger.warning(f"Generator not implemented: {e}")
+        raise HTTPException(
+            status_code=501, detail=f"Generator not implemented: {str(e)}"
+        ) from e
+    except Exception as e:
+        logger.error(f"Prompt generation failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Generation failed: {str(e)}"
         ) from e
