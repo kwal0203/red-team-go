@@ -16,6 +16,7 @@ dependencies = [
     "pymupdf",
     "prometheus-fastapi-instrumentator",
     "huggingface-hub",
+    "slowapi>=0.1.9",
 ]
 
 [dependency-groups]

@@ -2,9 +2,10 @@
 
 import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi.errors import RateLimitExceeded
 
 from services.adversarial_robustness.service import adversarial_robustness_service
 from services.bias_detection_dbias.service import (
@@ -21,6 +22,7 @@ from services.toxicity_detection.service import (
     toxicity_detection_realtime_service,
     toxicity_detection_service,
 )
+from utils.auth import APIKeyDep
 from utils.models import (
     AdversarialRobustnessRequest,
     AdversarialRobustnessResponse,
@@ -40,6 +42,13 @@ from utils.models import (
     StereotypeBenchmarkRequest,
     StereotypeBenchmarkResponse,
 )
+from utils.rate_limit import (
+    RATE_LIMIT_BATCH,
+    RATE_LIMIT_HEALTH,
+    RATE_LIMIT_REALTIME,
+    limiter,
+    rate_limit_exceeded_handler,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -54,6 +63,12 @@ app = FastAPI(
     description="LLM Red Teaming and Safety Evaluation API",
     version="0.1.0",
 )
+
+# Add rate limiter state to app
+app.state.limiter = limiter
+
+# Register rate limit exceeded handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # Add CORS middleware
 # TODO: Configure allowed origins based on environment
@@ -75,13 +90,15 @@ Instrumentator().instrument(app).expose(app)
 
 
 @app.get("/health")
-async def health_check():
+@limiter.limit(RATE_LIMIT_HEALTH)
+async def health_check(request: Request):
     """Health check endpoint for container orchestration."""
     return {"status": "healthy"}
 
 
 @app.get("/")
-def read_root():
+@limiter.limit(RATE_LIMIT_HEALTH)
+def read_root(request: Request):
     """Root endpoint returning service status."""
     return {"service": "online"}
 
@@ -92,12 +109,20 @@ def read_root():
 
 
 @app.post("/toxicity-detection-batch", response_model=ResultBatch)
-def toxicity_detection_batch(args: DetectionBatchToxicity):
+@limiter.limit(RATE_LIMIT_BATCH)
+def toxicity_detection_batch(
+    request: Request,
+    args: DetectionBatchToxicity,
+    api_key: APIKeyDep,
+):
     """
     Batch toxicity detection endpoint.
 
     Evaluates multiple prompts for toxicity using an ensemble of moderator models
     (OpenAI Moderator + Paradetox).
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
 
     Args:
         args: Batch detection configuration including model, num_samples, and prompt source.
@@ -111,11 +136,19 @@ def toxicity_detection_batch(args: DetectionBatchToxicity):
 
 
 @app.post("/bias-detection-batch", response_model=ResultBatch)
-def bias_detection_batch(args: DetectionBatchBias):
+@limiter.limit(RATE_LIMIT_BATCH)
+def bias_detection_batch(
+    request: Request,
+    args: DetectionBatchBias,
+    api_key: APIKeyDep,
+):
     """
     Batch bias detection endpoint.
 
     Evaluates multiple prompts for bias using self-evaluation methodology.
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
 
     Args:
         args: Batch detection configuration including model, num_samples, and prompt source.
@@ -134,12 +167,20 @@ def bias_detection_batch(args: DetectionBatchBias):
 
 
 @app.post("/toxicity-detection-realtime", response_model=ResultRealtimeToxicity)
-def toxicity_detection_realtime(args: DetectionRealtimeToxicity):
+@limiter.limit(RATE_LIMIT_REALTIME)
+def toxicity_detection_realtime(
+    request: Request,
+    args: DetectionRealtimeToxicity,
+    api_key: APIKeyDep,
+):
     """
     Realtime toxicity detection endpoint.
 
     Sends a single prompt to the target model, evaluates the response for toxicity,
     and returns both the response and toxicity scores.
+
+    Requires: X-API-Key header
+    Rate Limit: 30 requests/minute
 
     Args:
         args: Realtime detection request with model config and prompt.
@@ -165,12 +206,20 @@ def toxicity_detection_realtime(args: DetectionRealtimeToxicity):
 
 
 @app.post("/bias-detection-realtime", response_model=ResultRealtimeBias)
-def bias_detection_realtime(args: DetectionRealtimeBias):
+@limiter.limit(RATE_LIMIT_REALTIME)
+def bias_detection_realtime(
+    request: Request,
+    args: DetectionRealtimeBias,
+    api_key: APIKeyDep,
+):
     """
     Realtime bias detection endpoint.
 
     Sends a single prompt to the target model, evaluates the response for bias,
     and returns both the response and bias assessment.
+
+    Requires: X-API-Key header
+    Rate Limit: 30 requests/minute
 
     Args:
         args: Realtime detection request with model config and prompt.
@@ -201,13 +250,21 @@ def bias_detection_realtime(args: DetectionRealtimeBias):
 
 
 @app.post("/evaluate/guardrails", response_model=GuardrailEvaluateResponse)
-def evaluate_guardrails(args: GuardrailEvaluateRequest):
+@limiter.limit(RATE_LIMIT_REALTIME)
+def evaluate_guardrails(
+    request: Request,
+    args: GuardrailEvaluateRequest,
+    api_key: APIKeyDep,
+):
     """
     Evaluate guardrails for red-team testing.
 
     Sends a prompt to the target model and evaluates both the input prompt
     and the model's response for various safety violations. Use this to test
     whether a model's guardrails can be bypassed.
+
+    Requires: X-API-Key header
+    Rate Limit: 30 requests/minute
 
     Args:
         args: Evaluation request with model config, prompt, and optional guardrail filter.
@@ -234,12 +291,20 @@ def evaluate_guardrails(args: GuardrailEvaluateRequest):
 
 
 @app.post("/protect/guardrails", response_model=GuardrailProtectResponse)
-def protect_guardrails(args: GuardrailProtectRequest):
+@limiter.limit(RATE_LIMIT_REALTIME)
+def protect_guardrails(
+    request: Request,
+    args: GuardrailProtectRequest,
+    api_key: APIKeyDep,
+):
     """
     Protect mode guardrail check for production middleware.
 
     Checks input and/or output text for safety violations and applies
     the specified remediation action (block, flag, or redact).
+
+    Requires: X-API-Key header
+    Rate Limit: 30 requests/minute
 
     Args:
         args: Protect request with input/output text and action to take.
@@ -272,12 +337,20 @@ def protect_guardrails(args: GuardrailProtectRequest):
 
 
 @app.post("/adversarial-robustness", response_model=AdversarialRobustnessResponse)
-def adversarial_robustness(args: AdversarialRobustnessRequest):
+@limiter.limit(RATE_LIMIT_BATCH)
+def adversarial_robustness(
+    request: Request,
+    args: AdversarialRobustnessRequest,
+    api_key: APIKeyDep,
+):
     """
     Test adversarial robustness of model guardrails.
 
     Applies various text perturbations (character-level, word-level, semantic)
     to test if safety guardrails can be bypassed.
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
 
     Args:
         args: Robustness test request with model config, prompt, and perturbation settings.
@@ -313,12 +386,20 @@ def adversarial_robustness(args: AdversarialRobustnessRequest):
 
 
 @app.post("/stereotype-benchmark", response_model=StereotypeBenchmarkResponse)
-def stereotype_benchmark(args: StereotypeBenchmarkRequest):
+@limiter.limit(RATE_LIMIT_BATCH)
+def stereotype_benchmark(
+    request: Request,
+    args: StereotypeBenchmarkRequest,
+    api_key: APIKeyDep,
+):
     """
     Evaluate model for stereotypical biases using established benchmarks.
 
     Supports StereoSet, CrowS-Pairs, and BBQ benchmarks.
     Note: Full datasets must be loaded separately. Uses sample data by default.
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
 
     Args:
         args: Benchmark request with model config, benchmark name, and optional filters.
@@ -360,7 +441,12 @@ def stereotype_benchmark(args: StereotypeBenchmarkRequest):
 
 
 @app.post("/generate-adversarial-prompts", response_model=PromptGenerationResponse)
-def generate_adversarial_prompts(args: PromptGenerationRequest):
+@limiter.limit(RATE_LIMIT_BATCH)
+def generate_adversarial_prompts(
+    request: Request,
+    args: PromptGenerationRequest,
+    api_key: APIKeyDep,
+):
     """
     Generate adversarial prompts for red-teaming LLMs.
 
@@ -371,6 +457,9 @@ def generate_adversarial_prompts(args: PromptGenerationRequest):
     - "llm": LLM-based prompt generation (implemented)
     - "genetic": Genetic algorithm (stub)
     - "pair": PAIR method (stub)
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
 
     Args:
         args: Generation request with model config, category, generator, and settings.
