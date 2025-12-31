@@ -207,11 +207,12 @@ class TestGuardrailPipeline:
     def test_all_guardrails_enabled(self):
         """Test that all guardrails are enabled by default."""
         pipeline = GuardrailPipeline()
-        assert len(pipeline.active_guardrails) == 4
+        assert len(pipeline.active_guardrails) == 5
         assert "jailbreak" in pipeline.active_guardrails
         assert "injection" in pipeline.active_guardrails
         assert "toxicity" in pipeline.active_guardrails
         assert "harmful_content" in pipeline.active_guardrails
+        assert "privacy" in pipeline.active_guardrails
 
     def test_selective_guardrails(self):
         """Test enabling only specific guardrails."""

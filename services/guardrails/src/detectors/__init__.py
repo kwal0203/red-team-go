@@ -4,6 +4,7 @@ from services.guardrails.src.detectors.base import BaseGuardrail, GuardrailResul
 from services.guardrails.src.detectors.harmful_content import HarmfulContentDetector
 from services.guardrails.src.detectors.injection import InjectionDetector
 from services.guardrails.src.detectors.jailbreak import JailbreakDetector
+from services.guardrails.src.detectors.privacy import PrivacyDetector
 from services.guardrails.src.detectors.toxicity import ToxicityGuardrail
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "InjectionDetector",
     "ToxicityGuardrail",
     "HarmfulContentDetector",
+    "PrivacyDetector",
 ]
