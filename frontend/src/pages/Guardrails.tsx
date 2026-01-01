@@ -43,7 +43,8 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model } from '../api/types';
+import { Model, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } from '../api/constants';
 
 const AVAILABLE_GUARDRAILS = [
   { id: 'jailbreak', label: 'Jailbreak Detection', description: 'Detects DAN-style, roleplay, and system override attacks' },
@@ -108,16 +109,16 @@ export default function Guardrails() {
         title: 'Evaluation Complete',
         description: 'Guardrail evaluation has been completed.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to evaluate guardrails.',
+        description: getErrorMessage(error, 'Failed to evaluate guardrails.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -133,16 +134,16 @@ export default function Guardrails() {
         title: 'Protection Check Complete',
         description: 'Content has been checked against guardrails.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to check content.',
+        description: getErrorMessage(error, 'Failed to check content.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -150,7 +151,7 @@ export default function Guardrails() {
 
   const handleEvaluate = () => {
     if (!evaluatePrompt.trim()) {
-      toast({ title: 'Please enter a prompt', status: 'warning', duration: 3000 });
+      toast({ title: 'Please enter a prompt', status: 'warning', duration: TOAST_DURATION_WARNING });
       return;
     }
     evaluateMutation.mutate({
@@ -162,7 +163,7 @@ export default function Guardrails() {
 
   const handleProtect = () => {
     if (!inputText.trim() && !outputText.trim()) {
-      toast({ title: 'Please enter input or output text', status: 'warning', duration: 3000 });
+      toast({ title: 'Please enter input or output text', status: 'warning', duration: TOAST_DURATION_WARNING });
       return;
     }
     protectMutation.mutate({

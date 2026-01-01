@@ -36,7 +36,8 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model } from '../api/types';
+import { Model, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR } from '../api/constants';
 
 const PRIVACY_TESTS = [
   { id: 'training_extraction', label: 'Training Data Extraction', description: 'Probes for memorized training data', threshold: '0.90' },
@@ -64,16 +65,16 @@ export default function PrivacyTesting() {
         title: 'Testing Complete',
         description: 'Privacy red teaming has been completed.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to run privacy tests.',
+        description: getErrorMessage(error, 'Failed to run privacy tests.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },

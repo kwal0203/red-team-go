@@ -33,7 +33,8 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { DetectionRealtimeRequest, Model, ToxicityRealtimeResult, BiasRealtimeResult } from '../api/types';
+import { DetectionRealtimeRequest, Model, ToxicityRealtimeResult, BiasRealtimeResult, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } from '../api/constants';
 
 export default function RealtimeAnalysis() {
   const toast = useToast();
@@ -53,16 +54,16 @@ export default function RealtimeAnalysis() {
         title: 'Analysis Complete',
         description: 'Toxicity analysis has been completed successfully.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to complete toxicity analysis.',
+        description: getErrorMessage(error, 'Failed to complete toxicity analysis.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -78,16 +79,16 @@ export default function RealtimeAnalysis() {
         title: 'Analysis Complete',
         description: 'Bias analysis has been completed successfully.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to complete bias analysis.',
+        description: getErrorMessage(error, 'Failed to complete bias analysis.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -101,7 +102,7 @@ export default function RealtimeAnalysis() {
         title: 'Validation Error',
         description: 'Please enter a prompt.',
         status: 'warning',
-        duration: 3000,
+        duration: TOAST_DURATION_WARNING,
       });
     }
   };
@@ -114,7 +115,7 @@ export default function RealtimeAnalysis() {
         title: 'Validation Error',
         description: 'Please enter a prompt.',
         status: 'warning',
-        duration: 3000,
+        duration: TOAST_DURATION_WARNING,
       });
     }
   };
@@ -128,7 +129,7 @@ export default function RealtimeAnalysis() {
         title: 'Validation Error',
         description: 'Please enter a prompt.',
         status: 'warning',
-        duration: 3000,
+        duration: TOAST_DURATION_WARNING,
       });
     }
   };
@@ -382,8 +383,8 @@ export default function RealtimeAnalysis() {
       {(toxicityMutation.error || biasMutation.error) && (
         <Alert status="error" mt={4}>
           <AlertIcon />
-          {(toxicityMutation.error as any)?.response?.data?.detail ||
-           (biasMutation.error as any)?.response?.data?.detail ||
+          {getErrorMessage(toxicityMutation.error as ApiError, '') ||
+           getErrorMessage(biasMutation.error as ApiError, '') ||
            'An error occurred during analysis.'}
         </Alert>
       )}

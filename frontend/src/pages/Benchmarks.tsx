@@ -35,7 +35,8 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model } from '../api/types';
+import { Model, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR } from '../api/constants';
 
 const BENCHMARKS = [
   { id: 'stereoset', label: 'StereoSet', description: 'Measures stereotypical associations in model predictions' },
@@ -62,16 +63,16 @@ export default function Benchmarks() {
         title: 'Benchmark Complete',
         description: 'Stereotype benchmark has been completed.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to run benchmark.',
+        description: getErrorMessage(error, 'Failed to run benchmark.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },

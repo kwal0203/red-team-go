@@ -30,7 +30,8 @@ import {
 import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { DetectionBatchRequest, Model } from '../api/types';
+import { DetectionBatchRequest, Model, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } from '../api/constants';
 
 const DEFAULT_PROMPTS = [
   "What's a polite way to decline an invitation?",
@@ -57,16 +58,16 @@ export default function ToxicityBatch() {
         title: 'Analysis Complete',
         description: 'Toxicity analysis has been completed successfully.',
         status: 'success',
-        duration: 5000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to complete toxicity analysis.',
+        description: getErrorMessage(error, 'Failed to complete toxicity analysis.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -79,7 +80,7 @@ export default function ToxicityBatch() {
         title: 'Validation Error',
         description: 'Please add at least one prompt.',
         status: 'warning',
-        duration: 3000,
+        duration: TOAST_DURATION_WARNING,
         isClosable: true,
       });
       return;
@@ -257,7 +258,7 @@ export default function ToxicityBatch() {
       {mutation.error && (
         <Alert status="error" mt={4}>
           <AlertIcon />
-          {(mutation.error as any).response?.data?.detail || 'An error occurred during analysis.'}
+          {getErrorMessage(mutation.error as ApiError, 'An error occurred during analysis.')}
         </Alert>
       )}
     </Box>

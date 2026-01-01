@@ -32,7 +32,8 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model } from '../api/types';
+import { Model, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR } from '../api/constants';
 
 const CONSISTENCY_TESTS = [
   { id: 'sycophancy', label: 'Sycophancy', description: 'Tests if model changes opinions when challenged' },
@@ -81,10 +82,10 @@ export default function ReliabilityTesting() {
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Testing Complete', status: 'success', duration: 3000, isClosable: true });
+      toast({ title: 'Testing Complete', status: 'success', duration: TOAST_DURATION_SUCCESS, isClosable: true });
     },
-    onError: (error: any) => {
-      toast({ title: 'Error', description: error.response?.data?.detail || 'Failed', status: 'error', duration: 5000 });
+    onError: (error: ApiError) => {
+      toast({ title: 'Error', description: getErrorMessage(error, 'Failed'), status: 'error', duration: TOAST_DURATION_ERROR });
     },
   });
 
@@ -94,10 +95,10 @@ export default function ReliabilityTesting() {
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Testing Complete', status: 'success', duration: 3000, isClosable: true });
+      toast({ title: 'Testing Complete', status: 'success', duration: TOAST_DURATION_SUCCESS, isClosable: true });
     },
-    onError: (error: any) => {
-      toast({ title: 'Error', description: error.response?.data?.detail || 'Failed', status: 'error', duration: 5000 });
+    onError: (error: ApiError) => {
+      toast({ title: 'Error', description: getErrorMessage(error, 'Failed'), status: 'error', duration: TOAST_DURATION_ERROR });
     },
   });
 
@@ -107,10 +108,10 @@ export default function ReliabilityTesting() {
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Testing Complete', status: 'success', duration: 3000, isClosable: true });
+      toast({ title: 'Testing Complete', status: 'success', duration: TOAST_DURATION_SUCCESS, isClosable: true });
     },
-    onError: (error: any) => {
-      toast({ title: 'Error', description: error.response?.data?.detail || 'Failed', status: 'error', duration: 5000 });
+    onError: (error: ApiError) => {
+      toast({ title: 'Error', description: getErrorMessage(error, 'Failed'), status: 'error', duration: TOAST_DURATION_ERROR });
     },
   });
 

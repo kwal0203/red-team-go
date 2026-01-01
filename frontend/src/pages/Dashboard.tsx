@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../api/client';
+import { HEALTH_CHECK_INTERVAL } from '../api/constants';
 
 interface StatCardProps {
   title: string;
@@ -76,7 +77,7 @@ export default function Dashboard() {
       return data;
     },
     retry: 1,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: HEALTH_CHECK_INTERVAL,
   });
 
   const getSystemStatus = () => {

@@ -43,7 +43,8 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model } from '../api/types';
+import { Model, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } from '../api/constants';
 
 const PERTURBATION_TYPES = [
   { id: 'character', label: 'Character-level', description: 'Typos, unicode homoglyphs, invisible characters' },
@@ -92,16 +93,16 @@ export default function AdversarialTesting() {
         title: 'Testing Complete',
         description: 'Adversarial robustness testing has been completed.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to run robustness test.',
+        description: getErrorMessage(error, 'Failed to run robustness test.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -117,16 +118,16 @@ export default function AdversarialTesting() {
         title: 'Generation Complete',
         description: 'Adversarial prompts have been generated.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to generate prompts.',
+        description: getErrorMessage(error, 'Failed to generate prompts.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -134,7 +135,7 @@ export default function AdversarialTesting() {
 
   const handleRobustnessTest = () => {
     if (!robustnessPrompt.trim()) {
-      toast({ title: 'Please enter a prompt', status: 'warning', duration: 3000 });
+      toast({ title: 'Please enter a prompt', status: 'warning', duration: TOAST_DURATION_WARNING });
       return;
     }
     robustnessMutation.mutate({

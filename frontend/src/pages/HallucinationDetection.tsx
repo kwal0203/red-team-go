@@ -29,7 +29,8 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model } from '../api/types';
+import { Model, ApiError, getErrorMessage } from '../api/types';
+import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } from '../api/constants';
 
 const CONFIDENCE_METHODS = [
   { id: 'geometric', label: 'Geometric Mean', description: 'Sequence probability (default, most robust)' },
@@ -59,16 +60,16 @@ export default function HallucinationDetection() {
         title: 'Analysis Complete',
         description: 'Hallucination detection has been completed.',
         status: 'success',
-        duration: 3000,
+        duration: TOAST_DURATION_SUCCESS,
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to analyze.',
+        description: getErrorMessage(error, 'Failed to analyze.'),
         status: 'error',
-        duration: 5000,
+        duration: TOAST_DURATION_ERROR,
         isClosable: true,
       });
     },
@@ -76,7 +77,7 @@ export default function HallucinationDetection() {
 
   const handleAnalyze = () => {
     if (!prompt.trim()) {
-      toast({ title: 'Please enter a prompt', status: 'warning', duration: 3000 });
+      toast({ title: 'Please enter a prompt', status: 'warning', duration: TOAST_DURATION_WARNING });
       return;
     }
     hallucinationMutation.mutate({

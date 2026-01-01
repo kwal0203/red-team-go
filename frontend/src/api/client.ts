@@ -1,7 +1,11 @@
 import axios from 'axios';
+import { STORAGE_KEY_API_KEY } from './constants';
 
 // API base URL - uses environment variable or defaults to localhost
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+// Check if we're in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -13,7 +17,7 @@ const apiClient = axios.create({
 
 // Add API key to requests if available
 apiClient.interceptors.request.use((config) => {
-  const apiKey = localStorage.getItem('redteam_api_key');
+  const apiKey = localStorage.getItem(STORAGE_KEY_API_KEY);
   if (apiKey) {
     config.headers['X-API-Key'] = apiKey;
   }
@@ -24,10 +28,13 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      console.error('Authentication required');
-    } else if (error.response?.status === 429) {
-      console.error('Rate limit exceeded');
+    // Only log errors in development mode
+    if (isDevelopment) {
+      if (error.response?.status === 401) {
+        console.error('Authentication required');
+      } else if (error.response?.status === 429) {
+        console.error('Rate limit exceeded');
+      }
     }
     return Promise.reject(error);
   }
