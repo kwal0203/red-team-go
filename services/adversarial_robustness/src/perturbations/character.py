@@ -189,6 +189,7 @@ class CharacterPerturbation(BasePerturbation):
 
         if is_single_word:
             # For single word, insert within the word
+            # Skip if text too short (need at least 3 chars to insert in middle)
             if len(text) > 2:
                 for _ in range(num_variants):
                     pos = random.randint(1, len(text) - 1)
@@ -209,6 +210,7 @@ class CharacterPerturbation(BasePerturbation):
                 word_idx = random.randint(0, len(words) - 1)
                 word = perturbed_words[word_idx]
 
+                # Skip words too short to insert in middle
                 if len(word) > 2:
                     pos = random.randint(1, len(word) - 1)
                     invisible = random.choice(INVISIBLE_CHARS)

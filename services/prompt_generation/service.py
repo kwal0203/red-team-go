@@ -28,23 +28,45 @@ GENERATOR_REGISTRY = {
 }
 
 
-def _create_target_model(model: Model):
-    """Create the appropriate model wrapper based on model configuration."""
-    if "openai" in model.name:
-        logger.info(f"Creating OpenAI model wrapper for {model.name}")
-        return APIModelOpenai(name=model.name, description=model.description)
-    elif "huggingface" in model.name:
-        if model.base_url is None:
-            raise ValueError("base_url is required for HuggingFace models")
-        logger.info(f"Creating HuggingFace model wrapper for {model.name}")
+def _create_target_model(model: Model | dict):
+    """Create the appropriate model wrapper based on model configuration.
+
+    Args:
+        model: Model configuration (Pydantic model or dict).
+
+    Returns:
+        Model wrapper instance.
+
+    Raises:
+        ValueError: If model name is invalid or base_url missing for HuggingFace.
+    """
+    # Handle both Pydantic model and dict
+    if hasattr(model, "name"):
+        model_name = model.name
+        model_desc = model.description
+        model_url = getattr(model, "base_url", None)
+    else:
+        model_name = model["name"]
+        model_desc = model["description"]
+        model_url = model.get("base_url")
+
+    if "openai" in model_name:
+        logger.info(f"Creating OpenAI model wrapper for {model_name}")
+        return APIModelOpenai(name=model_name, description=model_desc)
+    elif "huggingface" in model_name:
+        if model_url is None:
+            raise ValueError(
+                f"base_url is required for HuggingFace model '{model_name}'"
+            )
+        logger.info(f"Creating HuggingFace model wrapper for {model_name}")
         return APIModelHuggingFace(
-            base_url=model.base_url,
-            name=model.name,
-            description=model.description,
+            base_url=model_url,
+            name=model_name,
+            description=model_desc,
         )
     else:
         raise ValueError(
-            f"Invalid model name '{model.name}': must contain 'openai' or 'huggingface'"
+            f"Invalid model name '{model_name}': must contain 'openai' or 'huggingface'"
         )
 
 
