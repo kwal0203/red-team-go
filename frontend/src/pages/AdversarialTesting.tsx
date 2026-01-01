@@ -68,8 +68,9 @@ const TARGET_CATEGORIES = [
 export default function AdversarialTesting() {
   const toast = useToast();
   const [model, setModel] = useState<Model>({
-    name: 'openai:gpt-4',
-    description: 'OpenAI GPT-4 for adversarial testing',
+    name: 'openai-gpt-4o-mini',
+    description: 'OpenAI GPT-4o-mini for adversarial testing',
+    model_name: 'gpt-4o-mini',
   });
 
   // Robustness state
@@ -192,11 +193,22 @@ export default function AdversarialTesting() {
                         <FormLabel>Model Name</FormLabel>
                         <Select
                           value={model.name}
-                          onChange={(e) => setModel({ ...model, name: e.target.value })}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const modelMap: Record<string, { name: string; model_name: string }> = {
+                              'openai-gpt-4o-mini': { name: 'openai-gpt-4o-mini', model_name: 'gpt-4o-mini' },
+                              'openai-gpt-4o': { name: 'openai-gpt-4o', model_name: 'gpt-4o' },
+                              'openai-gpt-4': { name: 'openai-gpt-4', model_name: 'gpt-4' },
+                              'openai-gpt-3.5-turbo': { name: 'openai-gpt-3.5-turbo', model_name: 'gpt-3.5-turbo' },
+                            };
+                            const selected = modelMap[value] || { name: value, model_name: '' };
+                            setModel({ ...model, ...selected });
+                          }}
                         >
-                          <option value="openai:gpt-4">OpenAI GPT-4</option>
-                          <option value="openai:gpt-4o">OpenAI GPT-4o</option>
-                          <option value="openai:gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                          <option value="openai-gpt-4o-mini">OpenAI GPT-4o-mini (Recommended)</option>
+                          <option value="openai-gpt-4o">OpenAI GPT-4o</option>
+                          <option value="openai-gpt-4">OpenAI GPT-4</option>
+                          <option value="openai-gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
                         </Select>
                       </FormControl>
                       <FormControl flex={1}>
@@ -262,48 +274,73 @@ export default function AdversarialTesting() {
             {robustnessMutation.data && (
               <Card>
                 <CardHeader>
-                  <Heading size="md">Robustness Results</Heading>
+                  <HStack justify="space-between">
+                    <Heading size="md">Robustness Results</Heading>
+                    {robustnessMutation.data.result && (
+                      <HStack>
+                        <Badge colorScheme={robustnessMutation.data.result.original_blocked ? 'green' : 'red'}>
+                          Original: {robustnessMutation.data.result.original_blocked ? 'Blocked' : 'Allowed'}
+                        </Badge>
+                        <Badge colorScheme="blue">
+                          {robustnessMutation.data.result.variants?.length || 0} variants tested
+                        </Badge>
+                      </HStack>
+                    )}
+                  </HStack>
                 </CardHeader>
                 <CardBody>
-                  <Accordion allowMultiple>
-                    {robustnessMutation.data.perturbations?.map((p: any, index: number) => (
-                      <AccordionItem key={index}>
-                        <h2>
-                          <AccordionButton>
-                            <Box flex="1" textAlign="left">
-                              <HStack>
-                                <Badge colorScheme={p.bypassed ? 'red' : 'green'}>
-                                  {p.bypassed ? 'BYPASSED' : 'BLOCKED'}
-                                </Badge>
-                                <Text fontSize="sm">{p.perturbation_type}</Text>
-                              </HStack>
-                            </Box>
-                            <AccordionIcon />
-                          </AccordionButton>
-                        </h2>
-                        <AccordionPanel pb={4}>
-                          <VStack align="stretch" spacing={3}>
-                            <Box>
-                              <Text fontWeight="semibold" fontSize="sm">Perturbed Prompt:</Text>
-                              <Code p={2} display="block" whiteSpace="pre-wrap" fontSize="sm">
-                                {p.perturbed_prompt}
-                              </Code>
-                            </Box>
-                            <Box>
-                              <Text fontWeight="semibold" fontSize="sm">Model Response:</Text>
-                              <Box bg="gray.50" p={3} borderRadius="md">
-                                <Text fontSize="sm">{p.response}</Text>
+                  {robustnessMutation.data.result?.variants ? (
+                    <Accordion allowMultiple>
+                      {robustnessMutation.data.result.variants.map((v: any, index: number) => (
+                        <AccordionItem key={index}>
+                          <h2>
+                            <AccordionButton>
+                              <Box flex="1" textAlign="left">
+                                <HStack>
+                                  <Badge colorScheme={v.bypass_successful ? 'red' : 'green'}>
+                                    {v.bypass_successful ? 'BYPASSED' : 'BLOCKED'}
+                                  </Badge>
+                                  <Badge colorScheme="purple">{v.perturbation_type}</Badge>
+                                  <Text fontSize="sm" color="gray.500">{v.method}</Text>
+                                </HStack>
                               </Box>
-                            </Box>
-                          </VStack>
-                        </AccordionPanel>
-                      </AccordionItem>
-                    )) || (
-                      <Box as="pre" fontSize="sm" whiteSpace="pre-wrap" bg="gray.50" p={4} borderRadius="md">
-                        {JSON.stringify(robustnessMutation.data, null, 2)}
-                      </Box>
-                    )}
-                  </Accordion>
+                              <AccordionIcon />
+                            </AccordionButton>
+                          </h2>
+                          <AccordionPanel pb={4}>
+                            <VStack align="stretch" spacing={3}>
+                              <Box>
+                                <Text fontWeight="semibold" fontSize="sm">Perturbed Prompt:</Text>
+                                <Code p={2} display="block" whiteSpace="pre-wrap" fontSize="sm">
+                                  {v.perturbed_prompt}
+                                </Code>
+                              </Box>
+                              {v.changes && v.changes.length > 0 && (
+                                <Box>
+                                  <Text fontWeight="semibold" fontSize="sm">Changes Made:</Text>
+                                  <HStack flexWrap="wrap" spacing={1}>
+                                    {v.changes.map((change: string, i: number) => (
+                                      <Badge key={i} colorScheme="orange" fontSize="xs">{change}</Badge>
+                                    ))}
+                                  </HStack>
+                                </Box>
+                              )}
+                              <Box>
+                                <Text fontWeight="semibold" fontSize="sm">Model Response:</Text>
+                                <Box bg="gray.50" p={3} borderRadius="md">
+                                  <Text fontSize="sm">{v.model_response}</Text>
+                                </Box>
+                              </Box>
+                            </VStack>
+                          </AccordionPanel>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  ) : (
+                    <Box as="pre" fontSize="sm" whiteSpace="pre-wrap" bg="gray.50" p={4} borderRadius="md">
+                      {JSON.stringify(robustnessMutation.data, null, 2)}
+                    </Box>
+                  )}
                 </CardBody>
               </Card>
             )}
@@ -326,11 +363,22 @@ export default function AdversarialTesting() {
                       <FormLabel>Model Name</FormLabel>
                       <Select
                         value={model.name}
-                        onChange={(e) => setModel({ ...model, name: e.target.value })}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const modelMap: Record<string, { name: string; model_name: string }> = {
+                            'openai-gpt-4o-mini': { name: 'openai-gpt-4o-mini', model_name: 'gpt-4o-mini' },
+                            'openai-gpt-4o': { name: 'openai-gpt-4o', model_name: 'gpt-4o' },
+                            'openai-gpt-4': { name: 'openai-gpt-4', model_name: 'gpt-4' },
+                            'openai-gpt-3.5-turbo': { name: 'openai-gpt-3.5-turbo', model_name: 'gpt-3.5-turbo' },
+                          };
+                          const selected = modelMap[value] || { name: value, model_name: '' };
+                          setModel({ ...model, ...selected });
+                        }}
                       >
-                        <option value="openai:gpt-4">OpenAI GPT-4</option>
-                        <option value="openai:gpt-4o">OpenAI GPT-4o</option>
-                        <option value="openai:gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                        <option value="openai-gpt-4o-mini">OpenAI GPT-4o-mini (Recommended)</option>
+                        <option value="openai-gpt-4o">OpenAI GPT-4o</option>
+                        <option value="openai-gpt-4">OpenAI GPT-4</option>
+                        <option value="openai-gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
                       </Select>
                     </FormControl>
                     <FormControl flex={1}>
