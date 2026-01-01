@@ -1,5 +1,4 @@
 from services.model_wrappers.base_model import WrapperModel
-from typing import Optional, Dict, List
 
 
 class APIModel(WrapperModel):
@@ -14,8 +13,8 @@ class APIModel(WrapperModel):
 
     def __init__(
         self,
-        name: Optional[str] = "my_api_model",
-        description: Optional[str] = "Remote large language model",
+        name: str | None = "my_api_model",
+        description: str | None = "Remote large language model",
     ) -> None:
         """
         Initializes the APIModel with the given name and description, and sets up the OpenAI API key.
@@ -26,46 +25,46 @@ class APIModel(WrapperModel):
         """
         super().__init__(name=name, description=description)
 
-    def preprocess(self, data: List[Dict]) -> List[str]:
+    def preprocess(self, data):
         """
         Preprocesses input data before sending it to the model.
 
         Args:
-            data (List[Dict]): A list of dictionaries representing the input data.
+            data: The input data to be preprocessed.
 
         Returns:
-            List[str]: A list of preprocessed strings.
+            The preprocessed data.
         """
         return data
 
-    def postprocess(self, response):
+    def postprocess(self, data):
         """
         Postprocesses the model's response to prepare it for output.
 
         Args:
-            response: The raw response from the model.
+            data: The raw response from the model.
 
         Returns:
             The processed response.
         """
-        return response
+        return data
 
-    def model_predict(self, data: List[str]) -> List[str]:
+    def model_predict(self, data):
         """
         Generates predictions from the model for the given input data.
 
         Args:
-            data (List[str]): A list of strings representing the input data.
+            data: The input data for the model.
 
         Returns:
-            List[str]: A list of model predictions.
+            The model's predictions.
         """
         input = self.preprocess(data=data)
         response = self._model_predict(inputs=input)
-        output = self.postprocess(response=response)
+        output = self.postprocess(data=response)
         return output
 
-    def _model_predict(self, inputs: List[str]) -> List[str]:
+    def _model_predict(self, inputs: list[str]) -> list[str]:
         """
         Sends preprocessed inputs to the remote model and retrieves responses.
 
@@ -76,7 +75,6 @@ class APIModel(WrapperModel):
             List[str]: A list of responses from the remote model.
         """
         # TODO: set this up so it queries the provided FastAPI endpoint
-        responses = []
-        for input in inputs:
-            responses.append(self.model(input))
-        return responses
+        raise NotImplementedError(
+            "Subclasses must implement _model_predict to query the remote model"
+        )

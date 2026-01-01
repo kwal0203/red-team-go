@@ -286,6 +286,7 @@ class TestContentRemediator:
         )
 
         assert result.allowed
+        assert result.remediated_content is not None
         assert "[REDACTED]" in result.remediated_content
 
 
