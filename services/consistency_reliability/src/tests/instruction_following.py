@@ -6,6 +6,7 @@ and constraint instructions.
 
 import logging
 import re
+from collections.abc import Callable
 
 from services.consistency_reliability.src.tests.base import BaseConsistencyTest
 
@@ -106,7 +107,7 @@ class InstructionFollowingTest(BaseConsistencyTest):
             )
         return parsed
 
-    def _create_simple_validator(self, instruction: str) -> callable:
+    def _create_simple_validator(self, instruction: str) -> Callable[[str], bool]:
         """Create a simple validator based on instruction text.
 
         This is a best-effort approach for custom constraints.
