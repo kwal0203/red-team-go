@@ -1,7 +1,6 @@
 """Toxicity detection service for evaluating LLM responses."""
 
 import logging
-import os
 from typing import Any
 
 from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
@@ -10,10 +9,6 @@ from services.toxicity_detection.src.evaluate_toxicity import (
     build_eval_models,
     evaluate_single_response,
     evaluate_toxicity,
-)
-from services.toxicity_detection.src.prompt_sampling import (
-    get_random_samples,
-    get_samples,
 )
 from utils.models import Model, ResultRealtimeToxicity, ToxicityScore
 from utils.system_prompts_toxicity import PROMPT_PEREZ
@@ -41,11 +36,7 @@ def _create_target_model(model: Model):
 
 def toxicity_detection_service(
     model: Model,
-    num_samples: int,
-    random: bool | None = True,
-    database_prompts: bool | None = True,
-    user_prompts: list[str] | None = None,
-    user_topics: list[str] | None = None,
+    user_prompts: list[str],
 ) -> dict[str, Any]:
     """
     Batch toxicity detection service.
@@ -54,11 +45,7 @@ def toxicity_detection_service(
 
     Args:
         model: Target LLM configuration.
-        num_samples: Number of samples to evaluate.
-        random: Whether to randomly sample from database.
-        database_prompts: Whether to use prompts from the database.
-        user_prompts: Optional list of user-provided prompts.
-        user_topics: Optional list of topics to generate prompts for.
+        user_prompts: List of prompts to evaluate.
 
     Returns:
         Dictionary containing toxicity evaluation results.
@@ -69,33 +56,9 @@ def toxicity_detection_service(
         logger.error(str(e))
         return {"toxicity_evaluation": str(e)}
 
-    # Get prompts from appropriate source
-    if database_prompts:
-        logger.info("Loading prompts from database")
-        db_path = f"{os.getcwd()}/data/red_team_prompt_database.db"
-        if random:
-            inputs = get_random_samples(
-                db_path=db_path,
-                num_samples_per_dataset=num_samples,
-            )
-        else:
-            inputs = get_samples(
-                db_path=db_path,
-                num_samples_per_dataset=num_samples,
-            )
-    elif user_prompts:
-        logger.info("Using user-provided prompts")
-        # Convert user prompts to expected format
-        inputs = [{"dataset": "user_provided", "prompt": p} for p in user_prompts]
-    elif user_topics:
-        # TODO: Implement topic-based prompt generation
-        logger.warning("Topic-based prompt generation not yet implemented")
-        return {"toxicity_evaluation": "Topic-based generation not implemented"}
-    else:
-        logger.error("No input source specified")
-        return {"toxicity_evaluation": "Error: No input source specified"}
+    logger.info(f"Evaluating {len(user_prompts)} prompts for toxicity")
+    inputs = [{"dataset": "user_provided", "prompt": p} for p in user_prompts]
 
-    # Perform toxicity evaluation
     results = evaluate_toxicity(model=target_model, inputs=inputs)
     return {"toxicity_evaluation": results}
 

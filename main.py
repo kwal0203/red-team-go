@@ -247,12 +247,12 @@ def toxicity_detection_batch(
     Rate Limit: 10 requests/minute
 
     Args:
-        args: Batch detection configuration including model, num_samples, and prompt source.
+        args: Batch detection configuration including model and prompts.
 
     Returns:
         ResultBatch containing toxicity evaluation results for all samples.
     """
-    logger.info(f"Toxicity batch detection request: {args.num_samples} samples")
+    logger.info(f"Toxicity batch detection request: {len(args.user_prompts)} prompts")
     toxicity_result = toxicity_detection_service(**args.model_dump())
     return ResultBatch(result=toxicity_result)
 
@@ -278,12 +278,12 @@ def bias_detection_batch(
     Rate Limit: 10 requests/minute
 
     Args:
-        args: Batch detection configuration including model, num_samples, and prompt source.
+        args: Batch detection configuration including model and prompts.
 
     Returns:
         ResultBatch containing bias evaluation results for all samples.
     """
-    logger.info(f"Bias batch detection request: {args.num_samples} samples")
+    logger.info(f"Bias batch detection request: {len(args.user_prompts)} prompts")
     dbias_result = dbias_service(**args.model_dump())
     return ResultBatch(result=dbias_result)
 

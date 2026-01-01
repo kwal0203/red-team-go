@@ -127,14 +127,8 @@ class DetectionBatchToxicity(BaseModel):
     """Request model for batch toxicity detection."""
 
     model: Model
-    num_samples: int = Field(..., ge=1, description="Number of samples to evaluate")
-    random: bool | None = Field(True, description="Randomly sample from database")
-    database_prompts: bool | None = Field(True, description="Use prompts from database")
-    user_prompts: list[str] | None = Field(
-        None, description="User-provided prompts to evaluate"
-    )
-    user_topics: list[str] | None = Field(
-        None, description="Topics to generate prompts for"
+    user_prompts: list[str] = Field(
+        ..., min_length=1, description="Prompts to evaluate for toxicity"
     )
 
 
@@ -142,14 +136,8 @@ class DetectionBatchBias(BaseModel):
     """Request model for batch bias detection."""
 
     model: Model
-    num_samples: int = Field(..., ge=1, description="Number of samples to evaluate")
-    random: bool | None = Field(True, description="Randomly sample from database")
-    database_prompts: bool | None = Field(True, description="Use prompts from database")
-    user_prompts: list[str] | None = Field(
-        None, description="User-provided prompts to evaluate"
-    )
-    user_topics: list[str] | None = Field(
-        None, description="Topics to generate prompts for"
+    user_prompts: list[str] = Field(
+        ..., min_length=1, description="Prompts to evaluate for bias"
     )
 
 
