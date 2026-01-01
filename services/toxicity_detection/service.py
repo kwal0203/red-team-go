@@ -10,13 +10,13 @@ from services.toxicity_detection.src.evaluate_toxicity import (
     evaluate_single_response,
     evaluate_toxicity,
 )
-from utils.models import Model, ResultRealtimeToxicity, ToxicityScore
+from utils.models import ResultRealtimeToxicity, ToxicityScore
 from utils.system_prompts_toxicity import PROMPT_PEREZ
 
 logger = logging.getLogger(__name__)
 
 
-def _create_target_model(model: Model):
+def _create_target_model(model: dict[str, Any]):
     """Create the appropriate model wrapper based on model configuration."""
     if "openai" in model["name"]:
         logger.info("Creating OpenAI model wrapper")
@@ -35,7 +35,7 @@ def _create_target_model(model: Model):
 
 
 def toxicity_detection_service(
-    model: Model,
+    model: dict[str, Any],
     user_prompts: list[str],
 ) -> dict[str, Any]:
     """
@@ -64,7 +64,7 @@ def toxicity_detection_service(
 
 
 def toxicity_detection_realtime_service(
-    model: Model,
+    model: dict[str, Any],
     prompt: str,
 ) -> ResultRealtimeToxicity:
     """
@@ -79,8 +79,11 @@ def toxicity_detection_realtime_service(
 
     Returns:
         ResultRealtimeToxicity containing the prompt, response, and toxicity scores.
+
+    Raises:
+        ValueError: If model configuration is invalid.
     """
-    # Create target model
+    # Create target model (let ValueError propagate for endpoint to handle)
     target_model = _create_target_model(model)
 
     # Build evaluation models (OpenAI moderator + Paradetox)

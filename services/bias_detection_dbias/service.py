@@ -9,12 +9,12 @@ from services.bias_detection_dbias.src.bias_detection import (
 )
 from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
 from services.model_wrappers.model_openai import APIModelOpenai
-from utils.models import BiasScore, Model, ResultRealtimeBias
+from utils.models import BiasScore, ResultRealtimeBias
 
 logger = logging.getLogger(__name__)
 
 
-def _create_target_model(model: Model):
+def _create_target_model(model: dict[str, Any]):
     """Create the appropriate model wrapper based on model configuration."""
     if "openai" in model["name"]:
         logger.info("Creating OpenAI model wrapper")
@@ -33,7 +33,7 @@ def _create_target_model(model: Model):
 
 
 def dbias_service(
-    model: Model,
+    model: dict[str, Any],
     user_prompts: list[str],
 ) -> dict[str, Any]:
     """
@@ -63,7 +63,7 @@ def dbias_service(
 
 
 def bias_detection_realtime_service(
-    model: Model,
+    model: dict[str, Any],
     prompt: str,
 ) -> ResultRealtimeBias:
     """
@@ -78,8 +78,11 @@ def bias_detection_realtime_service(
 
     Returns:
         ResultRealtimeBias containing the prompt, response, and bias assessment.
+
+    Raises:
+        ValueError: If model configuration is invalid.
     """
-    # Create target model
+    # Create target model (let ValueError propagate for endpoint to handle)
     target_model = _create_target_model(model)
 
     # Get model response and evaluate for bias
