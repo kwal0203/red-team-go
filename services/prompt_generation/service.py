@@ -28,7 +28,7 @@ GENERATOR_REGISTRY = {
 }
 
 
-def _create_target_model(model: Model | dict):
+def _create_target_model(model: Model | dict[str, str | None]):
     """Create the appropriate model wrapper based on model configuration.
 
     Args:
@@ -41,14 +41,14 @@ def _create_target_model(model: Model | dict):
         ValueError: If model name is invalid or base_url missing for HuggingFace.
     """
     # Handle both Pydantic model and dict
-    if hasattr(model, "name"):
-        model_name = model.name
-        model_desc = model.description
-        model_url = getattr(model, "base_url", None)
-    else:
+    if isinstance(model, dict):
         model_name = model["name"]
         model_desc = model["description"]
         model_url = model.get("base_url")
+    else:
+        model_name = model.name
+        model_desc = model.description
+        model_url = getattr(model, "base_url", None)
 
     if "openai" in model_name:
         logger.info(f"Creating OpenAI model wrapper for {model_name}")
