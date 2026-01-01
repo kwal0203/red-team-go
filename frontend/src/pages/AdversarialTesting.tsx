@@ -297,8 +297,8 @@ export default function AdversarialTesting() {
                             <AccordionButton>
                               <Box flex="1" textAlign="left">
                                 <HStack>
-                                  <Badge colorScheme={v.bypass_successful ? 'red' : 'green'}>
-                                    {v.bypass_successful ? 'BYPASSED' : 'BLOCKED'}
+                                  <Badge colorScheme={v.blocked ? 'green' : (v.bypass_successful ? 'red' : 'blue')}>
+                                    {v.blocked ? 'BLOCKED' : (v.bypass_successful ? 'BYPASSED' : 'ALLOWED')}
                                   </Badge>
                                   <Badge colorScheme="purple">{v.perturbation_type}</Badge>
                                   <Text fontSize="sm" color="gray.500">{v.method}</Text>
