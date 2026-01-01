@@ -276,22 +276,22 @@ export default function AdversarialTesting() {
                 <CardHeader>
                   <HStack justify="space-between">
                     <Heading size="md">Robustness Results</Heading>
-                    {robustnessMutation.data.result && (
+                    {robustnessMutation.data.variants && (
                       <HStack>
-                        <Badge colorScheme={robustnessMutation.data.result.original_blocked ? 'green' : 'red'}>
-                          Original: {robustnessMutation.data.result.original_blocked ? 'Blocked' : 'Allowed'}
+                        <Badge colorScheme={robustnessMutation.data.original_blocked ? 'green' : 'red'}>
+                          Original: {robustnessMutation.data.original_blocked ? 'Blocked' : 'Allowed'}
                         </Badge>
                         <Badge colorScheme="blue">
-                          {robustnessMutation.data.result.variants?.length || 0} variants tested
+                          {robustnessMutation.data.variants?.length || 0} variants tested
                         </Badge>
                       </HStack>
                     )}
                   </HStack>
                 </CardHeader>
                 <CardBody>
-                  {robustnessMutation.data.result?.variants ? (
+                  {robustnessMutation.data.variants ? (
                     <Accordion allowMultiple>
-                      {robustnessMutation.data.result.variants.map((v: any, index: number) => (
+                      {robustnessMutation.data.variants.map((v: any, index: number) => (
                         <AccordionItem key={index}>
                           <h2>
                             <AccordionButton>
