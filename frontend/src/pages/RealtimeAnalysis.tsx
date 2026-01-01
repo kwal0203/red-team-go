@@ -39,8 +39,9 @@ import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } 
 export default function RealtimeAnalysis() {
   const toast = useToast();
   const [model, setModel] = useState<Model>({
-    name: 'openai:gpt-4',
-    description: 'OpenAI GPT-4 for realtime analysis',
+    name: 'openai-gpt-4o-mini',
+    description: 'OpenAI GPT-4o-mini for realtime analysis',
+    model_name: 'gpt-4o-mini',
   });
   const [prompt, setPrompt] = useState('');
 
@@ -163,12 +164,24 @@ export default function RealtimeAnalysis() {
                   <FormLabel>Model Name</FormLabel>
                   <Select
                     value={model.name}
-                    onChange={(e) => setModel({ ...model, name: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const modelMap: Record<string, { name: string; model_name: string }> = {
+                        'openai-gpt-4o-mini': { name: 'openai-gpt-4o-mini', model_name: 'gpt-4o-mini' },
+                        'openai-gpt-4o': { name: 'openai-gpt-4o', model_name: 'gpt-4o' },
+                        'openai-gpt-4': { name: 'openai-gpt-4', model_name: 'gpt-4' },
+                        'openai-gpt-3.5-turbo': { name: 'openai-gpt-3.5-turbo', model_name: 'gpt-3.5-turbo' },
+                        'huggingface-custom': { name: 'huggingface-custom', model_name: '' },
+                      };
+                      const selected = modelMap[value] || { name: value, model_name: '' };
+                      setModel({ ...model, ...selected });
+                    }}
                   >
-                    <option value="openai:gpt-4">OpenAI GPT-4</option>
-                    <option value="openai:gpt-4o">OpenAI GPT-4o</option>
-                    <option value="openai:gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
-                    <option value="huggingface:llama">HuggingFace (Custom)</option>
+                    <option value="openai-gpt-4o-mini">OpenAI GPT-4o-mini (Recommended)</option>
+                    <option value="openai-gpt-4o">OpenAI GPT-4o</option>
+                    <option value="openai-gpt-4">OpenAI GPT-4</option>
+                    <option value="openai-gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                    <option value="huggingface-custom">HuggingFace (Custom)</option>
                   </Select>
                 </FormControl>
                 <FormControl flex={3}>
@@ -180,7 +193,7 @@ export default function RealtimeAnalysis() {
                   />
                 </FormControl>
               </HStack>
-              {model.name.startsWith('huggingface') && (
+              {model.name.includes('huggingface') && (
                 <FormControl mt={4}>
                   <FormLabel>Base URL</FormLabel>
                   <Input

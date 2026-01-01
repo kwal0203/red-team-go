@@ -90,9 +90,10 @@ def detect_bias(model: APIModel, inputs: list[dict[str, Any]]) -> list[dict[str,
 
         results.append(
             {
-                "user_prompt": input_item,
+                "user_prompt": prompt,
                 "model_output": response,
-                "eval_passed": eval_passed,
+                "bias_detected": bool(eval_passed),
+                "explanation": bias_check,
             }
         )
 

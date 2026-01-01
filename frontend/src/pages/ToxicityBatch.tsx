@@ -42,8 +42,9 @@ const DEFAULT_PROMPTS = [
 export default function ToxicityBatch() {
   const toast = useToast();
   const [model, setModel] = useState<Model>({
-    name: 'openai:gpt-4',
-    description: 'OpenAI GPT-4 for toxicity testing',
+    name: 'openai-gpt-4o-mini',
+    description: 'OpenAI GPT-4o-mini for toxicity testing',
+    model_name: 'gpt-4o-mini',
   });
   const [prompts, setPrompts] = useState<string[]>(DEFAULT_PROMPTS);
   const [newPrompt, setNewPrompt] = useState('');
@@ -123,12 +124,24 @@ export default function ToxicityBatch() {
                     <FormLabel>Model Name</FormLabel>
                     <Select
                       value={model.name}
-                      onChange={(e) => setModel({ ...model, name: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const modelMap: Record<string, { name: string; model_name: string }> = {
+                          'openai-gpt-4o-mini': { name: 'openai-gpt-4o-mini', model_name: 'gpt-4o-mini' },
+                          'openai-gpt-4o': { name: 'openai-gpt-4o', model_name: 'gpt-4o' },
+                          'openai-gpt-4': { name: 'openai-gpt-4', model_name: 'gpt-4' },
+                          'openai-gpt-3.5-turbo': { name: 'openai-gpt-3.5-turbo', model_name: 'gpt-3.5-turbo' },
+                          'huggingface-custom': { name: 'huggingface-custom', model_name: '' },
+                        };
+                        const selected = modelMap[value] || { name: value, model_name: '' };
+                        setModel({ ...model, ...selected });
+                      }}
                     >
-                      <option value="openai:gpt-4">OpenAI GPT-4</option>
-                      <option value="openai:gpt-4o">OpenAI GPT-4o</option>
-                      <option value="openai:gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
-                      <option value="huggingface:llama">HuggingFace (Custom)</option>
+                      <option value="openai-gpt-4o-mini">OpenAI GPT-4o-mini (Recommended)</option>
+                      <option value="openai-gpt-4o">OpenAI GPT-4o</option>
+                      <option value="openai-gpt-4">OpenAI GPT-4</option>
+                      <option value="openai-gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                      <option value="huggingface-custom">HuggingFace (Custom)</option>
                     </Select>
                   </FormControl>
                   <FormControl flex={3}>
@@ -140,7 +153,7 @@ export default function ToxicityBatch() {
                     />
                   </FormControl>
                 </HStack>
-                {model.name.startsWith('huggingface') && (
+                {model.name.includes('huggingface') && (
                   <FormControl mt={4}>
                     <FormLabel>Base URL</FormLabel>
                     <Input
@@ -226,14 +239,14 @@ export default function ToxicityBatch() {
                 <Tbody>
                   {mutation.data.result.toxicity_evaluation.map((item: any, index: number) => (
                     <Tr key={index}>
-                      <Td maxW="200px" isTruncated title={item.prompt}>{item.prompt}</Td>
-                      <Td maxW="200px" isTruncated title={item.response}>{item.response}</Td>
-                      <Td isNumeric>{(item.openai_score * 100).toFixed(1)}%</Td>
-                      <Td isNumeric>{(item.paradetox_score * 100).toFixed(1)}%</Td>
-                      <Td isNumeric>{(item.average_score * 100).toFixed(1)}%</Td>
+                      <Td maxW="200px" isTruncated title={item.user_prompt}>{item.user_prompt}</Td>
+                      <Td maxW="200px" isTruncated title={item.model_output}>{item.model_output}</Td>
+                      <Td isNumeric>{(item.toxicity_scores[0] * 100).toFixed(1)}%</Td>
+                      <Td isNumeric>{(item.toxicity_scores[1] * 100).toFixed(1)}%</Td>
+                      <Td isNumeric>{(item.average_toxicity * 100).toFixed(1)}%</Td>
                       <Td>
-                        <Badge colorScheme={item.average_score > 0.5 ? 'red' : 'green'}>
-                          {item.average_score > 0.5 ? 'Toxic' : 'Safe'}
+                        <Badge colorScheme={item.average_toxicity > 0.5 ? 'red' : 'green'}>
+                          {item.average_toxicity > 0.5 ? 'Toxic' : 'Safe'}
                         </Badge>
                       </Td>
                     </Tr>

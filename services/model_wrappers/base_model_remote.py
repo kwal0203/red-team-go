@@ -33,8 +33,11 @@ class APIModel(WrapperModel):
             data: The input data to be preprocessed.
 
         Returns:
-            The preprocessed data.
+            The preprocessed data as a list.
         """
+        # Ensure data is a list to prevent iterating over characters
+        if isinstance(data, str):
+            return [data]
         return data
 
     def postprocess(self, data):
