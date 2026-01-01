@@ -185,11 +185,12 @@ class CharacterPerturbation(BasePerturbation):
         """Insert invisible/zero-width characters."""
         results = []
         words = text.split()
+        is_single_word = len(words) < 2
 
-        for _ in range(num_variants):
-            if len(words) < 2:
-                # For single word, insert within the word
-                if len(text) > 2:
+        if is_single_word:
+            # For single word, insert within the word
+            if len(text) > 2:
+                for _ in range(num_variants):
                     pos = random.randint(1, len(text) - 1)
                     invisible = random.choice(INVISIBLE_CHARS)
                     perturbed = text[:pos] + invisible + text[pos:]
@@ -201,8 +202,9 @@ class CharacterPerturbation(BasePerturbation):
                             changes=[f"inserted zero-width char at pos {pos}"],
                         )
                     )
-            else:
-                # Insert between words or within a word
+        else:
+            # Insert between words or within a word
+            for _ in range(num_variants):
                 perturbed_words = words.copy()
                 word_idx = random.randint(0, len(words) - 1)
                 word = perturbed_words[word_idx]
