@@ -83,6 +83,10 @@ class Model(BaseModel):
     base_url: str | None = Field(
         None, description="Base URL for HuggingFace TGI endpoints"
     )
+    model_name: str | None = Field(
+        None,
+        description="Specific model name for API calls (e.g., 'gpt-3.5-turbo', 'gpt-4')",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -90,6 +94,7 @@ class Model(BaseModel):
                 {
                     "name": "openai-gpt-4",
                     "description": "OpenAI GPT-4 model",
+                    "model_name": "gpt-4",
                 },
                 {
                     "name": "huggingface-llama",
@@ -854,3 +859,101 @@ class PrivacyRedTeamResponse(BaseModel):
         ..., description="Results by test type"
     )
     summary: PrivacyRedTeamSummary = Field(..., description="Summary statistics")
+
+
+# =============================================================================
+# Model Confidence Hallucination Detection Models
+# =============================================================================
+
+
+class ModelConfidenceRequest(BaseModel):
+    """Request model for model confidence hallucination detection."""
+
+    model: Model
+    prompt: str = Field(
+        ..., description="The prompt to evaluate for hallucination risk"
+    )
+    method: str = Field(
+        "geometric",
+        description="Confidence calculation method",
+        examples=["geometric", "average", "minimum", "entropy", "variance"],
+    )
+    system_prompt: str | None = Field(
+        None, description="Optional system prompt for context"
+    )
+    max_tokens: int = Field(
+        256, ge=1, le=2048, description="Maximum tokens to generate"
+    )
+    include_all_methods: bool = Field(
+        False, description="Include confidence scores from all methods for comparison"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "model": {"model_name": "gpt-3.5-turbo"},
+                "prompt": "Summarize the key findings of the 2024 climate report.",
+                "method": "geometric",
+                "max_tokens": 256,
+                "include_all_methods": False,
+            }
+        }
+    }
+
+
+class ConfidenceDetails(BaseModel):
+    """Detailed confidence calculation metrics."""
+
+    avg_logprob: float | None = Field(
+        None, description="Average log probability (geometric method)"
+    )
+    sequence_probability: float | None = Field(
+        None, description="Sequence probability (geometric method)"
+    )
+    perplexity: float | None = Field(None, description="Model perplexity")
+    min_prob: float | None = Field(
+        None, description="Minimum token probability (minimum method)"
+    )
+    entropy: float | None = Field(
+        None, description="Information entropy (entropy method)"
+    )
+    variance: float | None = Field(
+        None, description="Log probability variance (variance method)"
+    )
+
+
+class MethodResult(BaseModel):
+    """Result from a single confidence calculation method."""
+
+    score: float = Field(..., ge=0, le=100, description="Confidence score (0-100)")
+    method: str = Field(..., description="Method used for calculation")
+    raw_value: float = Field(..., description="Raw calculated value before scaling")
+    num_tokens: int = Field(..., description="Number of tokens analyzed")
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Method-specific details"
+    )
+
+
+class ModelConfidenceResponse(BaseModel):
+    """Response model for model confidence hallucination detection."""
+
+    confidence_score: float = Field(
+        ..., ge=0, le=100, description="Overall confidence score (0-100)"
+    )
+    risk_level: str = Field(
+        ...,
+        description="Hallucination risk level",
+        examples=["low", "medium", "high", "critical"],
+    )
+    interpretation: str = Field(
+        ..., description="Human-readable interpretation of confidence score"
+    )
+    method: str = Field(..., description="Primary method used for calculation")
+    generated_text: str = Field(..., description="The model's generated response")
+    num_tokens: int = Field(..., description="Number of tokens in response")
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Calculation details"
+    )
+    all_methods: dict[str, MethodResult] | None = Field(
+        None, description="Results from all methods (if include_all_methods=True)"
+    )

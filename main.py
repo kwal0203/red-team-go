@@ -46,6 +46,8 @@ from utils.models import (
     GuardrailProtectResponse,
     MisinformationFactualityRequest,
     MisinformationFactualityResponse,
+    ModelConfidenceRequest,
+    ModelConfidenceResponse,
     PrivacyRedTeamRequest,
     PrivacyRedTeamResponse,
     PromptGenerationRequest,
@@ -129,6 +131,10 @@ TAGS_METADATA = [
         "name": "Privacy Red Team",
         "description": "Active probing for training data extraction, membership inference, and prompt leakage.",
     },
+    {
+        "name": "Hallucination Detection",
+        "description": "Detect hallucinations using model confidence from token log probabilities.",
+    },
 ]
 
 # Create FastAPI app
@@ -151,6 +157,7 @@ including toxicity detection, bias analysis, adversarial robustness testing, and
 - **Factuality Testing**: Knowledge cutoff, temporal reasoning, confidence calibration
 - **Refusal Testing**: Paraphrase, pressure, multi-turn, context switching attacks
 - **Privacy Red Team**: Training data extraction, membership inference, prompt leakage
+- **Hallucination Detection**: Model confidence analysis using token log probabilities
 
 ### Authentication
 
@@ -919,3 +926,76 @@ def privacy_redteam(
     except Exception as e:
         logger.error(f"Privacy red team test failed: {e}")
         raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}") from e
+
+
+# =============================================================================
+# Hallucination Detection Endpoints
+# =============================================================================
+
+
+@app.post(
+    "/hallucination-confidence",
+    response_model=ModelConfidenceResponse,
+    tags=["Hallucination Detection"],
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid request parameters"},
+    },
+)
+@limiter.limit(RATE_LIMIT_BATCH)
+def hallucination_confidence(
+    request: Request,
+    args: ModelConfidenceRequest,
+    api_key: APIKeyDep,
+):
+    """
+    Evaluate hallucination risk using model confidence.
+
+    Analyzes token-level log probabilities to estimate the likelihood
+    of hallucination in model outputs. Lower confidence suggests higher
+    risk of hallucination.
+
+    Based on: "Looking for a Needle in a Haystack: A Comprehensive Study of
+    Hallucinations in Neural Machine Translation" (Guerreiro et al., 2023)
+
+    Confidence Methods:
+    - "geometric": Sequence probability (default, most robust)
+    - "average": Mean token probability
+    - "minimum": Worst-case token confidence (pessimistic)
+    - "entropy": Information-theoretic uncertainty
+    - "variance": Consistency of confidence across tokens
+
+    Risk Levels:
+    - "low": Score >= 70 (unlikely hallucination)
+    - "medium": Score 50-69 (some uncertainty)
+    - "high": Score 30-49 (potential hallucination)
+    - "critical": Score < 30 (likely hallucination)
+
+    Requires: X-API-Key header
+    Rate Limit: 10 requests/minute
+
+    Args:
+        args: Request with model config, prompt, and confidence method.
+
+    Returns:
+        ModelConfidenceResponse with confidence score, risk level, and details.
+    """
+    from services.hallucination_detection_model_confidence import evaluate_confidence
+
+    logger.info(f"Hallucination confidence check for model: {args.model.name}")
+    try:
+        result = evaluate_confidence(
+            prompt=args.prompt,
+            model_name=args.model.model_name or "gpt-3.5-turbo",
+            method=args.method,
+            system_prompt=args.system_prompt,
+            max_tokens=args.max_tokens,
+            include_all_methods=args.include_all_methods,
+        )
+        return ModelConfidenceResponse(**result.to_dict())
+    except ValueError as e:
+        logger.error(f"Invalid request: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Hallucination confidence check failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Check failed: {str(e)}") from e
