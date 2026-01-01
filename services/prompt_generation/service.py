@@ -30,19 +30,21 @@ GENERATOR_REGISTRY = {
 
 def _create_target_model(model: Model):
     """Create the appropriate model wrapper based on model configuration."""
-    if "openai" in model["name"]:
-        logger.info(f"Creating OpenAI model wrapper for {model['name']}")
-        return APIModelOpenai(name=model["name"], description=model["description"])
-    elif "huggingface" in model["name"]:
-        logger.info(f"Creating HuggingFace model wrapper for {model['name']}")
+    if "openai" in model.name:
+        logger.info(f"Creating OpenAI model wrapper for {model.name}")
+        return APIModelOpenai(name=model.name, description=model.description)
+    elif "huggingface" in model.name:
+        if model.base_url is None:
+            raise ValueError("base_url is required for HuggingFace models")
+        logger.info(f"Creating HuggingFace model wrapper for {model.name}")
         return APIModelHuggingFace(
-            base_url=model["base_url"],
-            name=model["name"],
-            description=model["description"],
+            base_url=model.base_url,
+            name=model.name,
+            description=model.description,
         )
     else:
         raise ValueError(
-            f"Invalid model name '{model['name']}': must contain 'openai' or 'huggingface'"
+            f"Invalid model name '{model.name}': must contain 'openai' or 'huggingface'"
         )
 
 
