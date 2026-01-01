@@ -3,50 +3,16 @@
 import logging
 from typing import Any
 
-from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
-from services.model_wrappers.model_openai import APIModelOpenai
 from services.toxicity_detection.src.evaluate_toxicity import (
     build_eval_models,
     evaluate_single_response,
     evaluate_toxicity,
 )
+from utils.model_factory import create_target_model
 from utils.models import ResultRealtimeToxicity, ToxicityScore
 from utils.system_prompts_toxicity import PROMPT_PEREZ
 
 logger = logging.getLogger(__name__)
-
-
-def _create_target_model(model: dict[str, Any]):
-    """Create the appropriate model wrapper based on model configuration.
-
-    Raises:
-        ValueError: If model name/description missing or model type invalid.
-    """
-    model_name = model.get("name")
-    model_desc = model.get("description")
-
-    if not model_name or not model_desc:
-        raise ValueError("Model name and description are required")
-
-    if "openai" in model_name:
-        logger.info(f"Creating OpenAI model wrapper for {model_name}")
-        return APIModelOpenai(name=model_name, description=model_desc)
-    elif "huggingface" in model_name:
-        base_url = model.get("base_url")
-        if not base_url:
-            raise ValueError(
-                f"base_url is required for HuggingFace model '{model_name}'"
-            )
-        logger.info(f"Creating HuggingFace model wrapper for {model_name}")
-        return APIModelHuggingFace(
-            base_url=base_url,
-            name=model_name,
-            description=model_desc,
-        )
-    else:
-        raise ValueError(
-            f"Invalid model name '{model_name}': must contain 'openai' or 'huggingface'"
-        )
 
 
 def toxicity_detection_service(
@@ -68,7 +34,7 @@ def toxicity_detection_service(
     Raises:
         ValueError: If model configuration is invalid.
     """
-    target_model = _create_target_model(model)
+    target_model = create_target_model(model)
 
     logger.info(f"Evaluating {len(user_prompts)} prompts for toxicity")
     inputs = [{"dataset": "user_provided", "prompt": p} for p in user_prompts]
@@ -98,7 +64,7 @@ def toxicity_detection_realtime_service(
         ValueError: If model configuration is invalid.
     """
     # Create target model (let ValueError propagate for endpoint to handle)
-    target_model = _create_target_model(model)
+    target_model = create_target_model(model)
 
     # Build evaluation models (OpenAI moderator + Paradetox)
     evaluation_models = build_eval_models()

@@ -4,9 +4,8 @@ Generates adversarial prompts for red-teaming LLMs using various methods.
 """
 
 import logging
+from typing import Any
 
-from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
-from services.model_wrappers.model_openai import APIModelOpenai
 from services.prompt_generation.src.evaluator import (
     GenerationReport,
     PromptEvaluator,
@@ -16,7 +15,7 @@ from services.prompt_generation.src.generators import (
     LLMPromptGenerator,
     PAIRPromptGenerator,
 )
-from utils.models import Model
+from utils.model_factory import create_target_model
 
 logger = logging.getLogger(__name__)
 
@@ -28,53 +27,8 @@ GENERATOR_REGISTRY = {
 }
 
 
-def _create_target_model(model: Model | dict[str, str | None]):
-    """Create the appropriate model wrapper based on model configuration.
-
-    Args:
-        model: Model configuration (Pydantic model or dict).
-
-    Returns:
-        Model wrapper instance.
-
-    Raises:
-        ValueError: If model name is invalid or base_url missing for HuggingFace.
-    """
-    # Handle both Pydantic model and dict
-    if isinstance(model, dict):
-        model_name = model["name"]
-        model_desc = model["description"]
-        model_url = model.get("base_url")
-    else:
-        model_name = model.name
-        model_desc = model.description
-        model_url = getattr(model, "base_url", None)
-
-    if not model_name or not model_desc:
-        raise ValueError("Model name and description are required")
-
-    if "openai" in model_name:
-        logger.info(f"Creating OpenAI model wrapper for {model_name}")
-        return APIModelOpenai(name=model_name, description=model_desc)
-    elif "huggingface" in model_name:
-        if model_url is None:
-            raise ValueError(
-                f"base_url is required for HuggingFace model '{model_name}'"
-            )
-        logger.info(f"Creating HuggingFace model wrapper for {model_name}")
-        return APIModelHuggingFace(
-            base_url=model_url,
-            name=model_name,
-            description=model_desc,
-        )
-    else:
-        raise ValueError(
-            f"Invalid model name '{model_name}': must contain 'openai' or 'huggingface'"
-        )
-
-
 def prompt_generation_service(
-    model: Model,
+    model: dict[str, Any],
     target_category: str,
     generator: str = "llm",
     num_prompts: int = 10,
@@ -118,7 +72,7 @@ def prompt_generation_service(
         )
 
     # Create target model
-    target_model = _create_target_model(model)
+    target_model = create_target_model(model)
 
     # Create generator
     generator_class = GENERATOR_REGISTRY[generator]
