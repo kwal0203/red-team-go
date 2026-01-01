@@ -50,6 +50,9 @@ def _create_target_model(model: Model | dict[str, str | None]):
         model_desc = model.description
         model_url = getattr(model, "base_url", None)
 
+    if not model_name or not model_desc:
+        raise ValueError("Model name and description are required")
+
     if "openai" in model_name:
         logger.info(f"Creating OpenAI model wrapper for {model_name}")
         return APIModelOpenai(name=model_name, description=model_desc)
