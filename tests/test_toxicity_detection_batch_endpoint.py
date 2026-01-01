@@ -70,7 +70,7 @@ class TestToxicityBatchEndpointValidation:
         assert response.status_code == 422
 
     def test_invalid_model_name(self, client, valid_api_key):
-        """Test that invalid model name returns error."""
+        """Test that invalid model name returns 400 error."""
         response = client.post(
             "/toxicity-detection-batch",
             json={
@@ -82,10 +82,9 @@ class TestToxicityBatchEndpointValidation:
             },
             headers={"X-API-Key": valid_api_key},
         )
-        # Returns 200 with error in response body (service-level validation)
-        assert response.status_code == 200
+        assert response.status_code == 400
         data = response.json()
-        assert "invalid" in data["result"]["toxicity_evaluation"].lower()
+        assert "invalid" in data["detail"].lower()
 
 
 class TestToxicityBatchIntegration:

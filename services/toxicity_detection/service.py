@@ -17,20 +17,35 @@ logger = logging.getLogger(__name__)
 
 
 def _create_target_model(model: dict[str, Any]):
-    """Create the appropriate model wrapper based on model configuration."""
-    if "openai" in model["name"]:
-        logger.info("Creating OpenAI model wrapper")
-        return APIModelOpenai(name=model["name"], description=model["description"])
-    elif "huggingface" in model["name"]:
-        logger.info("Creating HuggingFace model wrapper")
+    """Create the appropriate model wrapper based on model configuration.
+
+    Raises:
+        ValueError: If model name/description missing or model type invalid.
+    """
+    model_name = model.get("name")
+    model_desc = model.get("description")
+
+    if not model_name or not model_desc:
+        raise ValueError("Model name and description are required")
+
+    if "openai" in model_name:
+        logger.info(f"Creating OpenAI model wrapper for {model_name}")
+        return APIModelOpenai(name=model_name, description=model_desc)
+    elif "huggingface" in model_name:
+        base_url = model.get("base_url")
+        if not base_url:
+            raise ValueError(
+                f"base_url is required for HuggingFace model '{model_name}'"
+            )
+        logger.info(f"Creating HuggingFace model wrapper for {model_name}")
         return APIModelHuggingFace(
-            base_url=model["base_url"],
-            name=model["name"],
-            description=model["description"],
+            base_url=base_url,
+            name=model_name,
+            description=model_desc,
         )
     else:
         raise ValueError(
-            f"Invalid model name '{model['name']}': must contain 'openai' or 'huggingface'"
+            f"Invalid model name '{model_name}': must contain 'openai' or 'huggingface'"
         )
 
 
@@ -49,12 +64,11 @@ def toxicity_detection_service(
 
     Returns:
         Dictionary containing toxicity evaluation results.
+
+    Raises:
+        ValueError: If model configuration is invalid.
     """
-    try:
-        target_model = _create_target_model(model)
-    except ValueError as e:
-        logger.error(str(e))
-        return {"toxicity_evaluation": str(e)}
+    target_model = _create_target_model(model)
 
     logger.info(f"Evaluating {len(user_prompts)} prompts for toxicity")
     inputs = [{"dataset": "user_provided", "prompt": p} for p in user_prompts]
