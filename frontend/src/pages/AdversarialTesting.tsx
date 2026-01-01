@@ -43,8 +43,9 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model, ApiError, getErrorMessage } from '../api/types';
+import { ApiError, getErrorMessage } from '../api/types';
 import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } from '../api/constants';
+import { useModelSelector, MODEL_OPTIONS } from '../hooks';
 
 const PERTURBATION_TYPES = [
   { id: 'character', label: 'Character-level', description: 'Typos, unicode homoglyphs, invisible characters' },
@@ -67,10 +68,8 @@ const TARGET_CATEGORIES = [
 
 export default function AdversarialTesting() {
   const toast = useToast();
-  const [model, setModel] = useState<Model>({
-    name: 'openai-gpt-4o-mini',
-    description: 'OpenAI GPT-4o-mini for adversarial testing',
-    model_name: 'gpt-4o-mini',
+  const { model, handleModelChange } = useModelSelector({
+    defaultDescription: 'OpenAI GPT-4o-mini for adversarial testing',
   });
 
   // Robustness state
@@ -193,22 +192,13 @@ export default function AdversarialTesting() {
                         <FormLabel>Model Name</FormLabel>
                         <Select
                           value={model.name}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const modelMap: Record<string, { name: string; model_name: string }> = {
-                              'openai-gpt-4o-mini': { name: 'openai-gpt-4o-mini', model_name: 'gpt-4o-mini' },
-                              'openai-gpt-4o': { name: 'openai-gpt-4o', model_name: 'gpt-4o' },
-                              'openai-gpt-4': { name: 'openai-gpt-4', model_name: 'gpt-4' },
-                              'openai-gpt-3.5-turbo': { name: 'openai-gpt-3.5-turbo', model_name: 'gpt-3.5-turbo' },
-                            };
-                            const selected = modelMap[value] || { name: value, model_name: '' };
-                            setModel({ ...model, ...selected });
-                          }}
+                          onChange={(e) => handleModelChange(e.target.value)}
                         >
-                          <option value="openai-gpt-4o-mini">OpenAI GPT-4o-mini (Recommended)</option>
-                          <option value="openai-gpt-4o">OpenAI GPT-4o</option>
-                          <option value="openai-gpt-4">OpenAI GPT-4</option>
-                          <option value="openai-gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                          {MODEL_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                         </Select>
                       </FormControl>
                       <FormControl flex={1}>
@@ -363,22 +353,13 @@ export default function AdversarialTesting() {
                       <FormLabel>Model Name</FormLabel>
                       <Select
                         value={model.name}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const modelMap: Record<string, { name: string; model_name: string }> = {
-                            'openai-gpt-4o-mini': { name: 'openai-gpt-4o-mini', model_name: 'gpt-4o-mini' },
-                            'openai-gpt-4o': { name: 'openai-gpt-4o', model_name: 'gpt-4o' },
-                            'openai-gpt-4': { name: 'openai-gpt-4', model_name: 'gpt-4' },
-                            'openai-gpt-3.5-turbo': { name: 'openai-gpt-3.5-turbo', model_name: 'gpt-3.5-turbo' },
-                          };
-                          const selected = modelMap[value] || { name: value, model_name: '' };
-                          setModel({ ...model, ...selected });
-                        }}
+                        onChange={(e) => handleModelChange(e.target.value)}
                       >
-                        <option value="openai-gpt-4o-mini">OpenAI GPT-4o-mini (Recommended)</option>
-                        <option value="openai-gpt-4o">OpenAI GPT-4o</option>
-                        <option value="openai-gpt-4">OpenAI GPT-4</option>
-                        <option value="openai-gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                        {MODEL_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
                       </Select>
                     </FormControl>
                     <FormControl flex={1}>
