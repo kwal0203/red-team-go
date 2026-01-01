@@ -229,7 +229,10 @@ def read_root(request: Request):
     "/toxicity-detection-batch",
     response_model=ResultBatch,
     tags=["Toxicity Detection"],
-    responses=COMMON_RESPONSES,
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid model configuration"},
+    },
 )
 @limiter.limit(RATE_LIMIT_BATCH)
 def toxicity_detection_batch(
@@ -247,21 +250,33 @@ def toxicity_detection_batch(
     Rate Limit: 10 requests/minute
 
     Args:
-        args: Batch detection configuration including model, num_samples, and prompt source.
+        args: Batch detection configuration including model and prompts.
 
     Returns:
         ResultBatch containing toxicity evaluation results for all samples.
     """
-    logger.info(f"Toxicity batch detection request: {args.num_samples} samples")
-    toxicity_result = toxicity_detection_service(**args.model_dump())
-    return ResultBatch(result=toxicity_result)
+    logger.info(f"Toxicity batch detection request: {len(args.user_prompts)} prompts")
+    try:
+        toxicity_result = toxicity_detection_service(**args.model_dump())
+        return ResultBatch(result=toxicity_result)
+    except ValueError as e:
+        logger.error(f"Invalid model configuration: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Toxicity batch detection failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Detection failed: {str(e)}"
+        ) from e
 
 
 @app.post(
     "/bias-detection-batch",
     response_model=ResultBatch,
     tags=["Bias Detection"],
-    responses=COMMON_RESPONSES,
+    responses={
+        **COMMON_RESPONSES,
+        400: {"model": ErrorResponse, "description": "Invalid model configuration"},
+    },
 )
 @limiter.limit(RATE_LIMIT_BATCH)
 def bias_detection_batch(
@@ -278,14 +293,23 @@ def bias_detection_batch(
     Rate Limit: 10 requests/minute
 
     Args:
-        args: Batch detection configuration including model, num_samples, and prompt source.
+        args: Batch detection configuration including model and prompts.
 
     Returns:
         ResultBatch containing bias evaluation results for all samples.
     """
-    logger.info(f"Bias batch detection request: {args.num_samples} samples")
-    dbias_result = dbias_service(**args.model_dump())
-    return ResultBatch(result=dbias_result)
+    logger.info(f"Bias batch detection request: {len(args.user_prompts)} prompts")
+    try:
+        dbias_result = dbias_service(**args.model_dump())
+        return ResultBatch(result=dbias_result)
+    except ValueError as e:
+        logger.error(f"Invalid model configuration: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Bias batch detection failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Detection failed: {str(e)}"
+        ) from e
 
 
 # =============================================================================
