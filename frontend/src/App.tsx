@@ -12,6 +12,12 @@ import Dashboard from './pages/Dashboard';
 import ToxicityBatch from './pages/ToxicityBatch';
 import BiasBatch from './pages/BiasBatch';
 import RealtimeAnalysis from './pages/RealtimeAnalysis';
+import Guardrails from './pages/Guardrails';
+import AdversarialTesting from './pages/AdversarialTesting';
+import Benchmarks from './pages/Benchmarks';
+import ReliabilityTesting from './pages/ReliabilityTesting';
+import PrivacyTesting from './pages/PrivacyTesting';
+import HallucinationDetection from './pages/HallucinationDetection';
 
 // Theme
 import theme from './theme';
@@ -30,9 +36,18 @@ function App() {
               <Box flex="1" p={8}>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
+                  {/* Detection */}
                   <Route path="/toxicity-batch" element={<ToxicityBatch />} />
                   <Route path="/bias-batch" element={<BiasBatch />} />
                   <Route path="/realtime" element={<RealtimeAnalysis />} />
+                  {/* Safety */}
+                  <Route path="/guardrails" element={<Guardrails />} />
+                  <Route path="/adversarial" element={<AdversarialTesting />} />
+                  {/* Evaluation */}
+                  <Route path="/benchmarks" element={<Benchmarks />} />
+                  <Route path="/reliability" element={<ReliabilityTesting />} />
+                  <Route path="/privacy" element={<PrivacyTesting />} />
+                  <Route path="/hallucination" element={<HallucinationDetection />} />
                 </Routes>
               </Box>
             </Box>

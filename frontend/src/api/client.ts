@@ -1,55 +1,36 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// API base URL - uses environment variable or defaults to localhost
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+// Create axios instance with default config
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-export interface ToxicityBatchRequest {
-  model: {
-    name: string;
-    description: string;
-    base_url: string | null;
-  };
-  num_samples: number;
-  random: boolean;
-  database_prompts: boolean;
-  user_prompts: string[] | null;
-  user_topics: string[] | null;
-}
+// Add API key to requests if available
+apiClient.interceptors.request.use((config) => {
+  const apiKey = localStorage.getItem('redteam_api_key');
+  if (apiKey) {
+    config.headers['X-API-Key'] = apiKey;
+  }
+  return config;
+});
 
-export interface BiasRequest {
-  model: {
-    name: string;
-    description: string;
-    base_url: string | null;
-  };
-  prompts: {
-    prompt_library_path: string;
-  };
-  topics: string[];
-}
+// Handle errors consistently
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('Authentication required');
+    } else if (error.response?.status === 429) {
+      console.error('Rate limit exceeded');
+    }
+    return Promise.reject(error);
+  }
+);
 
-export const api = {
-  health: {
-    check: () => apiClient.get('/health'),
-  },
-  toxicity: {
-    batch: (data: ToxicityBatchRequest) =>
-      apiClient.post('/toxicity-detection-batch', data),
-    realtime: (prompt: string) =>
-      apiClient.post('/toxicity-detection-realtime', { prompt }),
-  },
-  bias: {
-    batch: (data: BiasRequest) =>
-      apiClient.post('/bias-detection-batch', data),
-    realtime: (prompt: string) =>
-      apiClient.post('/bias-detection-realtime', { prompt }),
-  },
-};
-
-export default api;
+export default apiClient;
