@@ -3,6 +3,7 @@ cache/
 **/__pycache__/
 .env
 *.html
+!frontend/public/index.html
 .pytest_cache
 data/
 node_modules
