@@ -43,8 +43,9 @@ import {
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
-import { Model, ApiError, getErrorMessage } from '../api/types';
+import { ApiError, getErrorMessage } from '../api/types';
 import { TOAST_DURATION_SUCCESS, TOAST_DURATION_ERROR, TOAST_DURATION_WARNING } from '../api/constants';
+import { useModelSelector, MODEL_OPTIONS } from '../hooks';
 
 const PERTURBATION_TYPES = [
   { id: 'character', label: 'Character-level', description: 'Typos, unicode homoglyphs, invisible characters' },
@@ -67,9 +68,8 @@ const TARGET_CATEGORIES = [
 
 export default function AdversarialTesting() {
   const toast = useToast();
-  const [model, setModel] = useState<Model>({
-    name: 'openai:gpt-4',
-    description: 'OpenAI GPT-4 for adversarial testing',
+  const { model, handleModelChange } = useModelSelector({
+    defaultDescription: 'OpenAI GPT-4o-mini for adversarial testing',
   });
 
   // Robustness state
@@ -192,11 +192,13 @@ export default function AdversarialTesting() {
                         <FormLabel>Model Name</FormLabel>
                         <Select
                           value={model.name}
-                          onChange={(e) => setModel({ ...model, name: e.target.value })}
+                          onChange={(e) => handleModelChange(e.target.value)}
                         >
-                          <option value="openai:gpt-4">OpenAI GPT-4</option>
-                          <option value="openai:gpt-4o">OpenAI GPT-4o</option>
-                          <option value="openai:gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                          {MODEL_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                         </Select>
                       </FormControl>
                       <FormControl flex={1}>
@@ -262,48 +264,73 @@ export default function AdversarialTesting() {
             {robustnessMutation.data && (
               <Card>
                 <CardHeader>
-                  <Heading size="md">Robustness Results</Heading>
+                  <HStack justify="space-between">
+                    <Heading size="md">Robustness Results</Heading>
+                    {robustnessMutation.data.variants && (
+                      <HStack>
+                        <Badge colorScheme={robustnessMutation.data.original_blocked ? 'green' : 'red'}>
+                          Original: {robustnessMutation.data.original_blocked ? 'Blocked' : 'Allowed'}
+                        </Badge>
+                        <Badge colorScheme="blue">
+                          {robustnessMutation.data.variants?.length || 0} variants tested
+                        </Badge>
+                      </HStack>
+                    )}
+                  </HStack>
                 </CardHeader>
                 <CardBody>
-                  <Accordion allowMultiple>
-                    {robustnessMutation.data.perturbations?.map((p: any, index: number) => (
-                      <AccordionItem key={index}>
-                        <h2>
-                          <AccordionButton>
-                            <Box flex="1" textAlign="left">
-                              <HStack>
-                                <Badge colorScheme={p.bypassed ? 'red' : 'green'}>
-                                  {p.bypassed ? 'BYPASSED' : 'BLOCKED'}
-                                </Badge>
-                                <Text fontSize="sm">{p.perturbation_type}</Text>
-                              </HStack>
-                            </Box>
-                            <AccordionIcon />
-                          </AccordionButton>
-                        </h2>
-                        <AccordionPanel pb={4}>
-                          <VStack align="stretch" spacing={3}>
-                            <Box>
-                              <Text fontWeight="semibold" fontSize="sm">Perturbed Prompt:</Text>
-                              <Code p={2} display="block" whiteSpace="pre-wrap" fontSize="sm">
-                                {p.perturbed_prompt}
-                              </Code>
-                            </Box>
-                            <Box>
-                              <Text fontWeight="semibold" fontSize="sm">Model Response:</Text>
-                              <Box bg="gray.50" p={3} borderRadius="md">
-                                <Text fontSize="sm">{p.response}</Text>
+                  {robustnessMutation.data.variants ? (
+                    <Accordion allowMultiple>
+                      {robustnessMutation.data.variants.map((v: any, index: number) => (
+                        <AccordionItem key={index}>
+                          <h2>
+                            <AccordionButton>
+                              <Box flex="1" textAlign="left">
+                                <HStack>
+                                  <Badge colorScheme={v.blocked ? 'green' : (v.bypass_successful ? 'red' : 'blue')}>
+                                    {v.blocked ? 'BLOCKED' : (v.bypass_successful ? 'BYPASSED' : 'ALLOWED')}
+                                  </Badge>
+                                  <Badge colorScheme="purple">{v.perturbation_type}</Badge>
+                                  <Text fontSize="sm" color="gray.500">{v.method}</Text>
+                                </HStack>
                               </Box>
-                            </Box>
-                          </VStack>
-                        </AccordionPanel>
-                      </AccordionItem>
-                    )) || (
-                      <Box as="pre" fontSize="sm" whiteSpace="pre-wrap" bg="gray.50" p={4} borderRadius="md">
-                        {JSON.stringify(robustnessMutation.data, null, 2)}
-                      </Box>
-                    )}
-                  </Accordion>
+                              <AccordionIcon />
+                            </AccordionButton>
+                          </h2>
+                          <AccordionPanel pb={4}>
+                            <VStack align="stretch" spacing={3}>
+                              <Box>
+                                <Text fontWeight="semibold" fontSize="sm">Perturbed Prompt:</Text>
+                                <Code p={2} display="block" whiteSpace="pre-wrap" fontSize="sm">
+                                  {v.perturbed_prompt}
+                                </Code>
+                              </Box>
+                              {v.changes && v.changes.length > 0 && (
+                                <Box>
+                                  <Text fontWeight="semibold" fontSize="sm">Changes Made:</Text>
+                                  <HStack flexWrap="wrap" spacing={1}>
+                                    {v.changes.map((change: string, i: number) => (
+                                      <Badge key={i} colorScheme="orange" fontSize="xs">{change}</Badge>
+                                    ))}
+                                  </HStack>
+                                </Box>
+                              )}
+                              <Box>
+                                <Text fontWeight="semibold" fontSize="sm">Model Response:</Text>
+                                <Box bg="gray.50" p={3} borderRadius="md">
+                                  <Text fontSize="sm">{v.model_response}</Text>
+                                </Box>
+                              </Box>
+                            </VStack>
+                          </AccordionPanel>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  ) : (
+                    <Box as="pre" fontSize="sm" whiteSpace="pre-wrap" bg="gray.50" p={4} borderRadius="md">
+                      {JSON.stringify(robustnessMutation.data, null, 2)}
+                    </Box>
+                  )}
                 </CardBody>
               </Card>
             )}
@@ -326,11 +353,13 @@ export default function AdversarialTesting() {
                       <FormLabel>Model Name</FormLabel>
                       <Select
                         value={model.name}
-                        onChange={(e) => setModel({ ...model, name: e.target.value })}
+                        onChange={(e) => handleModelChange(e.target.value)}
                       >
-                        <option value="openai:gpt-4">OpenAI GPT-4</option>
-                        <option value="openai:gpt-4o">OpenAI GPT-4o</option>
-                        <option value="openai:gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                        {MODEL_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
                       </Select>
                     </FormControl>
                     <FormControl flex={1}>
