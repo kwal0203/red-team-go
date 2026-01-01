@@ -1,28 +1,19 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any
 
 
 @dataclass
 class ModelMeta:
-    name: Optional[str]
-    description: Optional[str]
+    name: str | None
+    description: str | None
 
 
-class ABC(metaclass=ABCMeta):
-    """
-    Helper class that provides a standard way to create an ABC using
-    inheritance.
-    """
-
-    __slots__ = ()
-
-
-class BaseModel(ABC):
+class BaseModel:
     def __init__(
         self,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """
         Initialize a new instance of the BaseModel class.
@@ -67,8 +58,8 @@ class WrapperModel(BaseModel, ABC):
 
     def __init__(
         self,
-        name: Optional[str] = "my_model",
-        description: Optional[str] = "Large language model",
+        name: str | None = "my_model",
+        description: str | None = "Large language model",
     ) -> None:
         """
         Initializes the WrapperModel with the given name and description.
@@ -82,7 +73,7 @@ class WrapperModel(BaseModel, ABC):
         super().__init__(name=name, description=description)
 
     @abstractmethod
-    def preprocess(self, data):
+    def preprocess(self, data: Any) -> Any:
         """
         Abstract method for preprocessing input data.
 
@@ -95,7 +86,7 @@ class WrapperModel(BaseModel, ABC):
         pass
 
     @abstractmethod
-    def postprocess(self, data):
+    def postprocess(self, data: Any) -> Any:
         """
         Abstract method for postprocessing the model's output.
 
@@ -108,7 +99,7 @@ class WrapperModel(BaseModel, ABC):
         pass
 
     @abstractmethod
-    def model_predict(self, data):
+    def model_predict(self, data: Any) -> Any:
         """
         Abstract method for generating predictions using the wrapped model.
 

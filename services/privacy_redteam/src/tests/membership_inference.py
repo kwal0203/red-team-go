@@ -121,12 +121,12 @@ class MembershipInferenceTest(BasePrivacyTest):
             extra_details={
                 "category_vulnerability": category_vulnerability,
                 "most_vulnerable_category": (
-                    max(category_vulnerability, key=category_vulnerability.get)
+                    max(category_vulnerability, key=lambda k: category_vulnerability[k])
                     if category_vulnerability
                     else None
                 ),
                 "least_vulnerable_category": (
-                    min(category_vulnerability, key=category_vulnerability.get)
+                    min(category_vulnerability, key=lambda k: category_vulnerability[k])
                     if category_vulnerability
                     else None
                 ),
