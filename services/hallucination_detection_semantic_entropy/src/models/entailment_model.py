@@ -1,10 +1,9 @@
-from transformers import (
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
-)
-
 import torch
 import torch.nn.functional as F
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+)
 
 # Determine device (GPU if available, else CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,5 +42,5 @@ class EntailmentDeberta:
 
         # Deberta-mnli returns classes: 0=contradiction, 1=neutral, 2=entailment
         largest_index = torch.argmax(F.softmax(logits, dim=1))
-        prediction = largest_index.cpu().item()
+        prediction = int(largest_index.cpu().item())
         return prediction
