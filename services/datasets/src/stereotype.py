@@ -3,9 +3,12 @@
 Implements loaders for StereoSet, CrowS-Pairs, and BBQ datasets.
 """
 
+import functools
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from typing import TypeVar
 
 from services.datasets.src.base import (
     BaseDatasetLoader,
@@ -17,6 +20,32 @@ from services.datasets.src.base import (
 from services.datasets.src.registry import register_dataset
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
+
+
+def _check_datasets_library() -> bool:
+    """Check if the datasets library is installed."""
+    try:
+        import datasets  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def require_datasets_library(func: Callable[..., T]) -> Callable[..., T]:
+    """Decorator that ensures the HuggingFace datasets library is available."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> T:
+        if not _check_datasets_library():
+            raise DatasetLoadError(
+                "The 'datasets' library is required. Install with: uv add datasets"
+            )
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class BiasType(str, Enum):
@@ -59,16 +88,6 @@ class StereotypeItem(DatasetItem):
         return base
 
 
-def _check_datasets_library() -> bool:
-    """Check if the datasets library is installed."""
-    try:
-        import datasets  # noqa: F401
-
-        return True
-    except ImportError:
-        return False
-
-
 @register_dataset
 class StereoSetLoader(BaseDatasetLoader):
     """Loader for the StereoSet dataset.
@@ -93,13 +112,9 @@ class StereoSetLoader(BaseDatasetLoader):
             huggingface_id="McGill-NLP/stereoset",
         )
 
+    @require_datasets_library
     def load(self) -> list[StereotypeItem]:
         """Load the full StereoSet dataset from HuggingFace."""
-        if not _check_datasets_library():
-            raise DatasetLoadError(
-                "The 'datasets' library is required. Install with: uv add datasets"
-            )
-
         try:
             from datasets import load_dataset
 
@@ -227,13 +242,9 @@ class CrowSPairsLoader(BaseDatasetLoader):
             huggingface_id="nyu-mll/crows_pairs",
         )
 
+    @require_datasets_library
     def load(self) -> list[StereotypeItem]:
         """Load the full CrowS-Pairs dataset from HuggingFace."""
-        if not _check_datasets_library():
-            raise DatasetLoadError(
-                "The 'datasets' library is required. Install with: uv add datasets"
-            )
-
         try:
             from datasets import load_dataset
 
@@ -350,13 +361,9 @@ class BBQLoader(BaseDatasetLoader):
             huggingface_id="heegyu/bbq",
         )
 
+    @require_datasets_library
     def load(self) -> list[DatasetItem]:
         """Load the full BBQ dataset from HuggingFace."""
-        if not _check_datasets_library():
-            raise DatasetLoadError(
-                "The 'datasets' library is required. Install with: uv add datasets"
-            )
-
         try:
             from datasets import load_dataset
 
