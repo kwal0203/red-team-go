@@ -172,10 +172,11 @@ def guardrails_protect_service(
         all_violations.extend(input_check.violations)
         input_result_dict = input_check.to_dict()
 
-        # Apply remediation to input
-        input_remediation_result = remediator.remediate(
-            input_text, input_check, remediation_action
-        )
+        # Apply remediation to input only if violations detected
+        if not input_safe:
+            input_remediation_result = remediator.remediate(
+                input_text, input_check, remediation_action
+            )
 
     # Check output if provided
     if output_text:
@@ -185,10 +186,11 @@ def guardrails_protect_service(
         all_violations.extend(output_check.violations)
         output_result_dict = output_check.to_dict()
 
-        # Apply remediation to output
-        output_remediation_result = remediator.remediate(
-            output_text, output_check, remediation_action
-        )
+        # Apply remediation to output only if violations detected
+        if not output_safe:
+            output_remediation_result = remediator.remediate(
+                output_text, output_check, remediation_action
+            )
 
     # Determine if content should be allowed based on remediation results
     # Both input and output must be allowed for overall allowed=True
