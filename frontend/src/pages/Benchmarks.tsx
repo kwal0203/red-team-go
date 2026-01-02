@@ -202,6 +202,7 @@ export default function Benchmarks() {
             {benchmarkMutation.data.metrics ? (
               <VStack spacing={6} align="stretch">
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                  {/* Stereotype Score - all benchmarks have this */}
                   <Stat>
                     <StatLabel>Stereotype Score</StatLabel>
                     <StatNumber>{(benchmarkMutation.data.metrics.stereotype_score * 100).toFixed(1)}%</StatNumber>
@@ -211,29 +212,71 @@ export default function Benchmarks() {
                       size="sm"
                       mt={2}
                     />
-                    <StatHelpText>Lower is better</StatHelpText>
+                    <StatHelpText>Lower is better (50% = unbiased)</StatHelpText>
                   </Stat>
-                  <Stat>
-                    <StatLabel>Anti-Stereotype Score</StatLabel>
-                    <StatNumber>{(benchmarkMutation.data.metrics.anti_stereotype_score * 100).toFixed(1)}%</StatNumber>
-                    <Progress
-                      value={benchmarkMutation.data.metrics.anti_stereotype_score * 100}
-                      colorScheme="blue"
-                      size="sm"
-                      mt={2}
-                    />
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Neutral Score</StatLabel>
-                    <StatNumber>{(benchmarkMutation.data.metrics.neutral_score * 100).toFixed(1)}%</StatNumber>
-                    <Progress
-                      value={benchmarkMutation.data.metrics.neutral_score * 100}
-                      colorScheme="green"
-                      size="sm"
-                      mt={2}
-                    />
-                    <StatHelpText>Higher is better</StatHelpText>
-                  </Stat>
+
+                  {/* Language Model Score - StereoSet only */}
+                  {benchmarkMutation.data.metrics.language_model_score !== undefined && (
+                    <Stat>
+                      <StatLabel>Language Model Score</StatLabel>
+                      <StatNumber>{(benchmarkMutation.data.metrics.language_model_score * 100).toFixed(1)}%</StatNumber>
+                      <Progress
+                        value={benchmarkMutation.data.metrics.language_model_score * 100}
+                        colorScheme={benchmarkMutation.data.metrics.language_model_score > 0.7 ? 'green' : 'yellow'}
+                        size="sm"
+                        mt={2}
+                      />
+                      <StatHelpText>Higher is better (prefers meaningful text)</StatHelpText>
+                    </Stat>
+                  )}
+
+                  {/* ICAT Score - StereoSet only */}
+                  {benchmarkMutation.data.metrics.icat_score !== undefined && (
+                    <Stat>
+                      <StatLabel>ICAT Score</StatLabel>
+                      <StatNumber>{(benchmarkMutation.data.metrics.icat_score * 100).toFixed(1)}%</StatNumber>
+                      <Progress
+                        value={benchmarkMutation.data.metrics.icat_score * 100}
+                        colorScheme={benchmarkMutation.data.metrics.icat_score > 0.7 ? 'green' : 'yellow'}
+                        size="sm"
+                        mt={2}
+                      />
+                      <StatHelpText>Higher is better (combined metric)</StatHelpText>
+                    </Stat>
+                  )}
+
+                  {/* Accuracy - BBQ only */}
+                  {benchmarkMutation.data.metrics.accuracy_disambiguated !== undefined && (
+                    <Stat>
+                      <StatLabel>Accuracy (Disambiguated)</StatLabel>
+                      <StatNumber>{(benchmarkMutation.data.metrics.accuracy_disambiguated * 100).toFixed(1)}%</StatNumber>
+                      <Progress
+                        value={benchmarkMutation.data.metrics.accuracy_disambiguated * 100}
+                        colorScheme={benchmarkMutation.data.metrics.accuracy_disambiguated > 0.7 ? 'green' : 'yellow'}
+                        size="sm"
+                        mt={2}
+                      />
+                      <StatHelpText>Higher is better</StatHelpText>
+                    </Stat>
+                  )}
+
+                  {/* Bias Detected - CrowS-Pairs and BBQ */}
+                  {benchmarkMutation.data.metrics.bias_detected !== undefined && (
+                    <Stat>
+                      <StatLabel>Bias Detected</StatLabel>
+                      <StatNumber>
+                        <Badge
+                          colorScheme={benchmarkMutation.data.metrics.bias_detected ? 'red' : 'green'}
+                          fontSize="lg"
+                          px={3}
+                          py={1}
+                        >
+                          {benchmarkMutation.data.metrics.bias_detected ? 'Yes' : 'No'}
+                        </Badge>
+                      </StatNumber>
+                      <StatHelpText>Based on threshold analysis</StatHelpText>
+                    </Stat>
+                  )}
                 </SimpleGrid>
 
                 {benchmarkMutation.data.samples && (
