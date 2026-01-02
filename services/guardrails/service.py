@@ -138,10 +138,16 @@ def guardrails_protect_service(
         - input_safe: Whether input passed checks (if provided)
         - output_safe: Whether output passed checks (if provided)
         - violations: List of all violations found
-        - remediated_output: Modified output (if redaction applied)
-        - remediated_input: Modified input (if redaction applied)
+        - remediated_input: Modified input (if redaction applied and violations found)
+        - remediated_output: Modified output (if redaction applied and violations found)
         - input_result: Detailed input check result (if input provided)
         - output_result: Detailed output check result (if output provided)
+        - input_remediation: Remediation info for input (action_taken, explanation)
+        - output_remediation: Remediation info for output (action_taken, explanation)
+
+    Note:
+        Remediation is only applied when violations are detected. Clean content
+        will not have remediation info in the response.
     """
     logger.info(f"Starting protect check with action={action}")
 
