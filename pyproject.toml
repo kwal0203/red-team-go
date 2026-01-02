@@ -10,6 +10,7 @@ dependencies = [
     "pydantic",
     "fastapi",
     "uvicorn",
+    "boto3",
     "python-dotenv",
     "nltk",
     "transformers",

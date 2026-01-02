@@ -80,6 +80,7 @@ from utils.rate_limit import (
     limiter,
     rate_limit_exceeded_handler,
 )
+from utils.artifact_storage import store_evaluation_artifact
 
 # Configure logging
 logging.basicConfig(
@@ -273,7 +274,16 @@ def toxicity_detection_batch(
     logger.info(f"Toxicity batch detection request: {len(args.user_prompts)} prompts")
     try:
         toxicity_result = toxicity_detection_service(**args.model_dump())
-        return ResultBatch(result=toxicity_result)
+        response = ResultBatch(result=toxicity_result)
+        store_evaluation_artifact(
+            request,
+            "toxicity_batch",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid model configuration: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -316,7 +326,16 @@ def bias_detection_batch(
     logger.info(f"Bias batch detection request: {len(args.user_prompts)} prompts")
     try:
         dbias_result = dbias_service(**args.model_dump())
-        return ResultBatch(result=dbias_result)
+        response = ResultBatch(result=dbias_result)
+        store_evaluation_artifact(
+            request,
+            "bias_batch",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid model configuration: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -368,7 +387,16 @@ def toxicity_detection_realtime(
             model=args.model.model_dump(),
             prompt=args.prompt,
         )
-        return result
+        response = ResultRealtimeToxicity(**result)
+        store_evaluation_artifact(
+            request,
+            "toxicity_realtime",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid model configuration: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -415,7 +443,16 @@ def bias_detection_realtime(
             model=args.model.model_dump(),
             prompt=args.prompt,
         )
-        return result
+        response = ResultRealtimeBias(**result)
+        store_evaluation_artifact(
+            request,
+            "bias_realtime",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid model configuration: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -469,7 +506,16 @@ def evaluate_guardrails(
             prompt=args.prompt,
             guardrails=args.guardrails,
         )
-        return GuardrailEvaluateResponse(**result)
+        response = GuardrailEvaluateResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "guardrails_evaluate",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid model configuration: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -518,7 +564,15 @@ def protect_guardrails(
             action=args.action,
             guardrails=args.guardrails,
         )
-        return GuardrailProtectResponse(**result)
+        response = GuardrailProtectResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "guardrails_protect",
+            args,
+            response,
+            api_key=api_key,
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -575,7 +629,16 @@ def adversarial_robustness(
             perturbation_types=args.perturbation_types,
             num_variants=args.num_variants,
         )
-        return AdversarialRobustnessResponse(**result)
+        response = AdversarialRobustnessResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "adversarial_robustness",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -634,7 +697,16 @@ def stereotype_benchmark(
             bias_types=args.bias_types,
             include_samples=args.include_samples,
         )
-        return StereotypeBenchmarkResponse(**result)
+        response = StereotypeBenchmarkResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "stereotype_benchmark",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name, "benchmark": args.benchmark},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -706,7 +778,20 @@ def generate_adversarial_prompts(
             seed_prompt=args.seed_prompt,
             evaluate=args.evaluate,
         )
-        return PromptGenerationResponse(**result)
+        response = PromptGenerationResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "prompt_generation",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={
+                "model": args.model.name,
+                "generator": args.generator,
+                "target_category": args.target_category,
+            },
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -776,7 +861,16 @@ def consistency_reliability(
             sycophancy_topics=args.sycophancy_topics,
             instruction_constraints=args.instruction_constraints,
         )
-        return ConsistencyReliabilityResponse(**result)
+        response = ConsistencyReliabilityResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "consistency_reliability",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -835,7 +929,16 @@ def misinformation_factuality(
             knowledge_cutoff_date=args.knowledge_cutoff_date,
             temporal_questions=args.temporal_questions,
         )
-        return MisinformationFactualityResponse(**result)
+        response = MisinformationFactualityResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "misinformation_factuality",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -898,7 +1001,16 @@ def refusal_consistency(
             num_samples=args.num_samples,
             custom_harmful_prompts=args.custom_harmful_prompts,
         )
-        return RefusalConsistencyResponse(**result)
+        response = RefusalConsistencyResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "refusal_consistency",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -958,7 +1070,16 @@ def privacy_redteam(
             system_prompt=args.system_prompt,
             custom_probes=args.custom_probes,
         )
-        return PrivacyRedTeamResponse(**result)
+        response = PrivacyRedTeamResponse(**result)
+        store_evaluation_artifact(
+            request,
+            "privacy_redteam",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -1031,7 +1152,16 @@ def hallucination_confidence(
             max_tokens=args.max_tokens,
             include_all_methods=args.include_all_methods,
         )
-        return ModelConfidenceResponse(**result.to_dict())
+        response = ModelConfidenceResponse(**result.to_dict())
+        store_evaluation_artifact(
+            request,
+            "model_confidence",
+            args,
+            response,
+            api_key=api_key,
+            extra_metadata={"model": args.model.name},
+        )
+        return response
     except ValueError as e:
         logger.error(f"Invalid request: {e}")
         raise HTTPException(status_code=400, detail=str(e)) from e
