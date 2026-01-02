@@ -15,6 +15,10 @@ RUN npm install --legacy-peer-deps
 # Copy the rest of the application
 COPY . .
 
+# Allow the API base URL to be baked into the frontend build.
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+
 # Build the application
 RUN npm run build
 
