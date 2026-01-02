@@ -15,8 +15,6 @@ import {
   CardHeader,
   Heading,
   Badge,
-  Alert,
-  AlertIcon,
   SimpleGrid,
   Stat,
   StatLabel,
@@ -27,12 +25,6 @@ import {
   CheckboxGroup,
   Input,
   Divider,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
 } from '@chakra-ui/react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../api/client';
@@ -96,16 +88,6 @@ export default function PrivacyTesting() {
       case 'C': return 'yellow';
       case 'D': return 'orange';
       case 'F': return 'red';
-      default: return 'gray';
-    }
-  };
-
-  const getLeakageTypeColor = (type: string) => {
-    switch (type) {
-      case 'pii_leakage': return 'red';
-      case 'verbatim_leakage': return 'orange';
-      case 'instruction_leakage': return 'purple';
-      case 'confidence_leakage': return 'yellow';
       default: return 'gray';
     }
   };
@@ -209,93 +191,89 @@ export default function PrivacyTesting() {
           <CardHeader>
             <HStack justify="space-between">
               <Heading size="md">Privacy Test Results</Heading>
-              {privacyMutation.data.overall_grade && (
-                <Badge fontSize="xl" colorScheme={getGradeColor(privacyMutation.data.overall_grade)}>
-                  Grade: {privacyMutation.data.overall_grade}
-                </Badge>
-              )}
+              {(() => {
+                const d = privacyMutation.data;
+                const grade = d.overall_grade ?? d.summary?.privacy_grade;
+                return grade ? (
+                  <Badge fontSize="xl" colorScheme={getGradeColor(grade)}>
+                    Grade: {grade}
+                  </Badge>
+                ) : null;
+              })()}
             </HStack>
           </CardHeader>
           <CardBody>
-            {privacyMutation.data.test_results ? (
+            {(() => {
+              // Handle both formats: data.results (object) or data.test_results (array)
+              const data = privacyMutation.data;
+              let testResults: any[] = [];
+              if (data.results && typeof data.results === 'object') {
+                testResults = Object.values(data.results);
+              } else if (data.test_results && Array.isArray(data.test_results)) {
+                testResults = data.test_results;
+              }
+
+              // Calculate summary values from results if not provided directly
+              const overallScore = data.overall_score ?? data.summary?.overall_score ?? 0;
+              const overallGrade = data.overall_grade ?? data.summary?.privacy_grade ?? 'F';
+              const passed = data.passed ?? data.summary?.tests_passed === data.summary?.tests_run;
+
+              return testResults.length > 0 ? (
               <VStack spacing={6} align="stretch">
                 {/* Test Results */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  {privacyMutation.data.test_results.map((test: any, i: number) => (
+                  {testResults.map((test: any, i: number) => {
+                    // Calculate grade from score if not provided
+                    const testGrade = test.grade ?? (
+                      test.score >= 0.9 ? 'A' :
+                      test.score >= 0.8 ? 'B' :
+                      test.score >= 0.7 ? 'C' :
+                      test.score >= 0.6 ? 'D' : 'F'
+                    );
+                    return (
                     <Card key={i} variant="outline">
                       <CardBody py={3}>
                         <HStack justify="space-between" mb={2}>
-                          <Text fontWeight="semibold">{test.test_type.replace('_', ' ')}</Text>
+                          <Text fontWeight="semibold">{test.test_type?.replace(/_/g, ' ') ?? 'Unknown'}</Text>
                           <Badge colorScheme={test.passed ? 'green' : 'red'}>
                             {test.passed ? 'PASSED' : 'FAILED'}
                           </Badge>
                         </HStack>
                         <Progress
-                          value={test.score * 100}
-                          colorScheme={getGradeColor(test.grade)}
+                          value={(test.score ?? 0) * 100}
+                          colorScheme={getGradeColor(testGrade)}
                           size="sm"
                           mb={2}
                         />
                         <HStack justify="space-between" fontSize="sm">
-                          <Text>Score: {(test.score * 100).toFixed(1)}%</Text>
-                          <Badge colorScheme={getGradeColor(test.grade)}>{test.grade}</Badge>
+                          <Text>Score: {((test.score ?? 0) * 100).toFixed(1)}%</Text>
+                          <Badge colorScheme={getGradeColor(testGrade)}>{testGrade}</Badge>
                         </HStack>
+                        {test.leakage_detected && (
+                          <Text fontSize="xs" color="red.500" mt={1}>
+                            {test.leakage_count} leakage(s) detected
+                          </Text>
+                        )}
                       </CardBody>
                     </Card>
-                  ))}
+                  )})}
                 </SimpleGrid>
-
-                <Divider />
-
-                {/* Leakage Findings */}
-                {privacyMutation.data.leakages && privacyMutation.data.leakages.length > 0 && (
-                  <Box>
-                    <Alert status="warning" mb={4}>
-                      <AlertIcon />
-                      <Text fontWeight="bold">
-                        {privacyMutation.data.leakages.length} potential leakage(s) detected
-                      </Text>
-                    </Alert>
-                    <Table size="sm" variant="simple">
-                      <Thead>
-                        <Tr>
-                          <Th>Type</Th>
-                          <Th>Content</Th>
-                          <Th>Confidence</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {privacyMutation.data.leakages.map((l: any, i: number) => (
-                          <Tr key={i}>
-                            <Td>
-                              <Badge colorScheme={getLeakageTypeColor(l.type)}>{l.type}</Badge>
-                            </Td>
-                            <Td fontSize="sm" maxW="300px" isTruncated>{l.content}</Td>
-                            <Td>
-                              <Progress value={l.confidence * 100} size="sm" w="60px" colorScheme="red" />
-                            </Td>
-                          </Tr>
-                        ))}
-                      </Tbody>
-                    </Table>
-                  </Box>
-                )}
 
                 <Divider />
 
                 {/* Overall Score */}
                 <Stat>
                   <StatLabel>Overall Privacy Score</StatLabel>
-                  <StatNumber>{(privacyMutation.data.overall_score * 100).toFixed(1)}%</StatNumber>
+                  <StatNumber>{(overallScore * 100).toFixed(1)}%</StatNumber>
                   <Progress
-                    value={privacyMutation.data.overall_score * 100}
-                    colorScheme={getGradeColor(privacyMutation.data.overall_grade)}
+                    value={overallScore * 100}
+                    colorScheme={getGradeColor(overallGrade)}
                     size="md"
                     mt={2}
                   />
                   <StatHelpText>
-                    <Badge colorScheme={privacyMutation.data.passed ? 'green' : 'red'}>
-                      {privacyMutation.data.passed ? 'OVERALL PASSED' : 'OVERALL FAILED'}
+                    <Badge colorScheme={passed ? 'green' : 'red'}>
+                      {passed ? 'OVERALL PASSED' : 'OVERALL FAILED'}
                     </Badge>
                   </StatHelpText>
                 </Stat>
@@ -304,7 +282,8 @@ export default function PrivacyTesting() {
               <Box as="pre" fontSize="sm" whiteSpace="pre-wrap" bg="gray.50" p={4} borderRadius="md">
                 {JSON.stringify(privacyMutation.data, null, 2)}
               </Box>
-            )}
+            );
+            })()}
           </CardBody>
         </Card>
       )}
