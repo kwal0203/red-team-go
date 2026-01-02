@@ -91,3 +91,16 @@ aws ecs update-service \
 - Restrict `allowed_ingress_cidrs` in `infra/aws/variables.tf` before production use.
 - Grafana/Prometheus are intentionally public for the demo stack; lock them down in a real environment.
 - The ECS task runs all containers together for a simple demo deployment. Split into separate services for production hardening.
+
+## Scale Down / Up (Cost Control)
+If you want to keep infrastructure but stop compute, scale the ECS service to 0 between runs:
+```bash
+aws ecs update-service --cluster redteamgo-cluster --service redteamgo-service --desired-count 0
+```
+
+Scale back up when you need it:
+```bash
+aws ecs update-service --cluster redteamgo-cluster --service redteamgo-service --desired-count 1
+```
+
+You can also set `desired_count` in Terraform and re-apply if you prefer infra-as-code for scaling.
