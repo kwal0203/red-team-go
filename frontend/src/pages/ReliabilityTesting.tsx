@@ -278,7 +278,6 @@ export default function ReliabilityTesting() {
                   <FormControl>
                     <FormLabel>Example Prompts</FormLabel>
                     <Select
-                      value=""
                       onChange={(e) => setConsistencyPrompt(e.target.value)}
                       placeholder="Select an example prompt..."
                     >
@@ -347,7 +346,6 @@ export default function ReliabilityTesting() {
                   <FormControl>
                     <FormLabel>Example Prompts</FormLabel>
                     <Select
-                      value=""
                       onChange={(e) => setMisinfoPrompt(e.target.value)}
                       placeholder="Select an example prompt..."
                     >
@@ -424,7 +422,6 @@ export default function ReliabilityTesting() {
                   <FormControl>
                     <FormLabel>Example Prompts</FormLabel>
                     <Select
-                      value=""
                       onChange={(e) => setRefusalPrompt(e.target.value)}
                       placeholder="Select an example prompt..."
                     >
