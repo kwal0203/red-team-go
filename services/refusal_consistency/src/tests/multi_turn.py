@@ -180,6 +180,15 @@ class MultiTurnEscalationTest(BaseRefusalTest):
 
         for turn in turns:
             role = turn["role"]
+
+            # Skip assistant turns with template (placeholders for model responses)
+            if role == "assistant" and "template" in turn:
+                continue
+
+            # Only process turns with content
+            if "content" not in turn:
+                continue
+
             content = turn["content"]
 
             # Replace placeholder with actual harmful prompt
@@ -188,11 +197,6 @@ class MultiTurnEscalationTest(BaseRefusalTest):
 
             if role == "user":
                 messages.append({"role": "user", "content": content})
-            elif role == "assistant" and "template" in turn:
-                # This is a placeholder for model response
-                # In a real multi-turn test, we would get actual responses
-                # For simplicity, we use the conversation approach
-                pass
 
         # Concatenate messages into a single prompt for the model
         conversation_prompt = self._build_conversation_prompt(messages)
@@ -233,11 +237,14 @@ class MultiTurnEscalationTest(BaseRefusalTest):
         parts.append("---")
 
         for i, turn in enumerate(turns):
+            # Skip turns without content (e.g., assistant template placeholders)
+            if "content" not in turn:
+                continue
+
             role = turn["role"]
             content = turn["content"]
             if "{prompt}" in content:
                 content = content.format(prompt=harmful_prompt)
-            if "template" not in turn:
-                parts.append(f"Turn {i + 1} ({role}): {content}")
+            parts.append(f"Turn {i + 1} ({role}): {content}")
 
         return "\n".join(parts)
