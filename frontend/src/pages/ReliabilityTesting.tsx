@@ -173,72 +173,107 @@ export default function ReliabilityTesting() {
     }
   };
 
+  const getScoreGrade = (score: number): string => {
+    if (score >= 0.9) return 'A';
+    if (score >= 0.8) return 'B';
+    if (score >= 0.7) return 'C';
+    if (score >= 0.6) return 'D';
+    return 'F';
+  };
+
   const renderTestResults = (data: any) => {
     if (!data) return null;
+
+    // Handle both formats: data.results (object) or data.test_results (array)
+    let testResults: any[] = [];
+    if (data.results && typeof data.results === 'object') {
+      testResults = Object.values(data.results);
+    } else if (data.test_results && Array.isArray(data.test_results)) {
+      testResults = data.test_results;
+    }
+
+    // Calculate overall stats if not provided
+    const overallScore = data.overall_score ?? (
+      testResults.length > 0
+        ? testResults.reduce((sum: number, t: any) => sum + (t.score || 0), 0) / testResults.length
+        : 0
+    );
+    const overallGrade = data.overall_grade ?? getScoreGrade(overallScore);
+    const overallPassed = data.passed ?? testResults.every((t: any) => t.passed);
+
+    if (testResults.length === 0) {
+      return (
+        <Card>
+          <CardHeader>
+            <Heading size="md">Test Results</Heading>
+          </CardHeader>
+          <CardBody>
+            <Box as="pre" fontSize="sm" whiteSpace="pre-wrap" bg="gray.50" p={4} borderRadius="md">
+              {JSON.stringify(data, null, 2)}
+            </Box>
+          </CardBody>
+        </Card>
+      );
+    }
 
     return (
       <Card>
         <CardHeader>
           <HStack justify="space-between">
             <Heading size="md">Test Results</Heading>
-            {data.overall_grade && (
-              <Badge fontSize="xl" colorScheme={getGradeColor(data.overall_grade)}>
-                Grade: {data.overall_grade}
-              </Badge>
-            )}
+            <Badge fontSize="xl" colorScheme={getGradeColor(overallGrade)}>
+              Grade: {overallGrade}
+            </Badge>
           </HStack>
         </CardHeader>
         <CardBody>
-          {data.test_results ? (
-            <VStack spacing={4} align="stretch">
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                {data.test_results.map((test: any, i: number) => (
+          <VStack spacing={4} align="stretch">
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              {testResults.map((test: any, i: number) => {
+                const testGrade = test.grade ?? getScoreGrade(test.score || 0);
+                return (
                   <Card key={i} variant="outline">
                     <CardBody py={3}>
                       <HStack justify="space-between" mb={2}>
-                        <Text fontWeight="semibold">{test.test_type}</Text>
+                        <Text fontWeight="semibold">{test.test_type || 'Unknown Test'}</Text>
                         <Badge colorScheme={test.passed ? 'green' : 'red'}>
                           {test.passed ? 'PASSED' : 'FAILED'}
                         </Badge>
                       </HStack>
                       <Progress
-                        value={test.score * 100}
-                        colorScheme={getGradeColor(test.grade)}
+                        value={(test.score || 0) * 100}
+                        colorScheme={getGradeColor(testGrade)}
                         size="sm"
                         mb={2}
                       />
                       <HStack justify="space-between" fontSize="sm">
-                        <Text>Score: {(test.score * 100).toFixed(1)}%</Text>
-                        <Badge colorScheme={getGradeColor(test.grade)}>{test.grade}</Badge>
+                        <Text>Score: {((test.score || 0) * 100).toFixed(1)}%</Text>
+                        <Badge colorScheme={getGradeColor(testGrade)}>{testGrade}</Badge>
                       </HStack>
                     </CardBody>
                   </Card>
-                ))}
-              </SimpleGrid>
+                );
+              })}
+            </SimpleGrid>
 
-              <Divider />
+            <Divider />
 
-              <Stat>
-                <StatLabel>Overall Score</StatLabel>
-                <StatNumber>{(data.overall_score * 100).toFixed(1)}%</StatNumber>
-                <Progress
-                  value={data.overall_score * 100}
-                  colorScheme={getGradeColor(data.overall_grade)}
-                  size="md"
-                  mt={2}
-                />
-                <StatHelpText>
-                  <Badge colorScheme={data.passed ? 'green' : 'red'}>
-                    {data.passed ? 'OVERALL PASSED' : 'OVERALL FAILED'}
-                  </Badge>
-                </StatHelpText>
-              </Stat>
-            </VStack>
-          ) : (
-            <Box as="pre" fontSize="sm" whiteSpace="pre-wrap" bg="gray.50" p={4} borderRadius="md">
-              {JSON.stringify(data, null, 2)}
-            </Box>
-          )}
+            <Stat>
+              <StatLabel>Overall Score</StatLabel>
+              <StatNumber>{(overallScore * 100).toFixed(1)}%</StatNumber>
+              <Progress
+                value={overallScore * 100}
+                colorScheme={getGradeColor(overallGrade)}
+                size="md"
+                mt={2}
+              />
+              <StatHelpText>
+                <Badge colorScheme={overallPassed ? 'green' : 'red'}>
+                  {overallPassed ? 'OVERALL PASSED' : 'OVERALL FAILED'}
+                </Badge>
+              </StatHelpText>
+            </Stat>
+          </VStack>
         </CardBody>
       </Card>
     );
