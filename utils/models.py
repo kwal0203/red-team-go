@@ -322,11 +322,18 @@ class GuardrailProtectResponse(BaseModel):
         ..., description="Whether output passed checks (if provided)"
     )
     violations: list[str] = Field(..., description="List of all violations found")
+    remediated_input: str | None = Field(
+        None, description="Modified input if redaction was applied"
+    )
     remediated_output: str | None = Field(
         None, description="Modified output if redaction was applied"
     )
-    remediation: GuardrailRemediationInfo | None = Field(
-        None, description="Details about remediation action taken"
+    input_remediation: GuardrailRemediationInfo | None = Field(
+        None, description="Remediation action taken on input (only if violations found)"
+    )
+    output_remediation: GuardrailRemediationInfo | None = Field(
+        None,
+        description="Remediation action taken on output (only if violations found)",
     )
 
 

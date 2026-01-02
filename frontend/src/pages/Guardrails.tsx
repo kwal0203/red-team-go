@@ -71,16 +71,20 @@ interface EvaluateResponse {
   guardrails_bypassed: string[];
 }
 
+interface RemediationInfo {
+  action_taken: string;
+  explanation: string;
+}
+
 interface ProtectResponse {
   allowed: boolean;
   input_safe: boolean;
   output_safe: boolean;
   violations: string[];
+  remediated_input?: string;
   remediated_output?: string;
-  remediation?: {
-    action_taken: string;
-    explanation: string;
-  };
+  input_remediation?: RemediationInfo;
+  output_remediation?: RemediationInfo;
 }
 
 export default function Guardrails() {
@@ -497,21 +501,42 @@ export default function Guardrails() {
                       </Alert>
                     )}
 
-                    {protectMutation.data.remediation && (
+                    {protectMutation.data.input_remediation && (
                       <Box>
-                        <Text fontWeight="semibold" mb={2}>Remediation Applied:</Text>
+                        <HStack mb={2}>
+                          <Text fontWeight="semibold">Input Remediation:</Text>
+                          <Badge colorScheme={protectMutation.data.input_remediation.action_taken === 'block' ? 'red' : protectMutation.data.input_remediation.action_taken === 'flag' ? 'yellow' : 'blue'}>
+                            {protectMutation.data.input_remediation.action_taken.toUpperCase()}
+                          </Badge>
+                        </HStack>
                         <Box bg="blue.50" p={4} borderRadius="md">
-                          <Text fontSize="sm"><strong>Action:</strong> {protectMutation.data.remediation.action_taken}</Text>
-                          <Text fontSize="sm">{protectMutation.data.remediation.explanation}</Text>
+                          <Text fontSize="sm">{protectMutation.data.input_remediation.explanation}</Text>
+                          {protectMutation.data.remediated_input && (
+                            <Box mt={2} bg="white" p={2} borderRadius="md">
+                              <Text fontSize="xs" color="gray.500" mb={1}>Remediated content:</Text>
+                              <Text fontSize="sm">{protectMutation.data.remediated_input}</Text>
+                            </Box>
+                          )}
                         </Box>
                       </Box>
                     )}
 
-                    {protectMutation.data.remediated_output && (
+                    {protectMutation.data.output_remediation && (
                       <Box>
-                        <Text fontWeight="semibold" mb={2}>Remediated Output:</Text>
-                        <Box bg="gray.50" p={4} borderRadius="md">
-                          <Text fontSize="sm">{protectMutation.data.remediated_output}</Text>
+                        <HStack mb={2}>
+                          <Text fontWeight="semibold">Output Remediation:</Text>
+                          <Badge colorScheme={protectMutation.data.output_remediation.action_taken === 'block' ? 'red' : protectMutation.data.output_remediation.action_taken === 'flag' ? 'yellow' : 'blue'}>
+                            {protectMutation.data.output_remediation.action_taken.toUpperCase()}
+                          </Badge>
+                        </HStack>
+                        <Box bg="blue.50" p={4} borderRadius="md">
+                          <Text fontSize="sm">{protectMutation.data.output_remediation.explanation}</Text>
+                          {protectMutation.data.remediated_output && (
+                            <Box mt={2} bg="white" p={2} borderRadius="md">
+                              <Text fontSize="xs" color="gray.500" mb={1}>Remediated content:</Text>
+                              <Text fontSize="sm">{protectMutation.data.remediated_output}</Text>
+                            </Box>
+                          )}
                         </Box>
                       </Box>
                     )}
