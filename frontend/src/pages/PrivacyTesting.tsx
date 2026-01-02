@@ -216,7 +216,8 @@ export default function PrivacyTesting() {
               // Calculate summary values from results if not provided directly
               const overallScore = data.overall_score ?? data.summary?.overall_score ?? 0;
               const overallGrade = data.overall_grade ?? data.summary?.privacy_grade ?? 'F';
-              const passed = data.passed ?? data.summary?.tests_passed === data.summary?.tests_run;
+              // Consider passed if overall score >= 70% (grade C or better)
+              const passed = overallScore >= 0.7;
 
               return testResults.length > 0 ? (
               <VStack spacing={6} align="stretch">
