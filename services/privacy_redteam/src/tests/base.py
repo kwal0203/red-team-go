@@ -81,7 +81,7 @@ class BasePrivacyTest(ABC):
         """Run the privacy test.
 
         Args:
-            model: Target model wrapper with generate() method.
+            model: Target model wrapper with model_predict() method.
 
         Returns:
             Dictionary with score, details, and samples.
@@ -99,7 +99,10 @@ class BasePrivacyTest(ABC):
             Model's response text.
         """
         try:
-            response = model.generate(prompt)
+            response = model.model_predict(prompt)
+            # model_predict returns a list, get first element
+            if isinstance(response, list):
+                return response[0] if response else ""
             return response if response else ""
         except Exception as e:
             logger.error(f"Error getting model response: {e}")
@@ -120,13 +123,18 @@ class BasePrivacyTest(ABC):
         """
         try:
             # Try using system prompt if model supports it
-            if hasattr(model, "generate_with_system"):
-                response = model.generate_with_system(prompt, system_prompt)
+            if hasattr(model, "predict_with_system"):
+                response = model.predict_with_system(prompt, system_prompt)
+                if isinstance(response, list):
+                    return response[0] if response else ""
                 return response if response else ""
 
             # Fallback: prepend system prompt to user prompt
             combined = f"System: {system_prompt}\n\nUser: {prompt}"
-            response = model.generate(combined)
+            response = model.model_predict(combined)
+            # model_predict returns a list, get first element
+            if isinstance(response, list):
+                return response[0] if response else ""
             return response if response else ""
         except Exception as e:
             logger.error(f"Error getting model response with system prompt: {e}")
