@@ -1,44 +1,48 @@
 # RedTeamGO
 
 ## Overview
-RedTeamGO is a proof of concept system for evaluating Large Language Models (LLMs) through automated testing of toxicity and bias detection. The system provides both batch processing capabilities for systematic evaluation and real-time analysis for interactive testing.
+RedTeamGO is an LLM red teaming and safety evaluation platform. It provides a FastAPI service and optional React UI for running automated tests across safety, robustness, factuality, and privacy.
 
 ## Features
-- **Toxicity Detection:** Evaluates model outputs for harmful or toxic content
-- **Bias Detection:** Analyzes responses for various types of bias (gender, racial, religious, etc.)
-- **Batch Processing:** Test multiple prompts systematically
-- **Real-time Analysis:** Immediate feedback for individual prompts
-- **Multiple Model Support:** Compatible with OpenAI and HuggingFace models
-- **Monitoring:** Integrated Prometheus and Grafana dashboards for system metrics
+- **Safety Evaluations:** Toxicity, bias, guardrails, refusal consistency, privacy red teaming
+- **Robustness Testing:** Character/word/semantic perturbations and adversarial prompt generation
+- **Reliability & Factuality:** Consistency, instruction following, misinformation checks
+- **Prompt Generation:** LLM, genetic, and PAIR methods with optional evaluation
+- **Datasets:** Benchmark datasets (StereoSet, CrowS-Pairs, BBQ)
+- **Monitoring:** Prometheus metrics and optional Grafana dashboard
+- **Artifact Storage:** Local or S3 storage with provenance metadata
 
-## Installation
+## Installation (uv)
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/RedTeamGO.git
-   cd RedTeamGO
+   git clone https://github.com/kwal0203/red-team-go.git
+   cd red-team-go
    ```
 
-2. Install the required dependencies:
+2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
+
+Optional (pip):
+```bash
+pip install -e .
+```
 
 ## Usage
 
 ### Development Mode
-Run the FastAPI server directly with auto-reload for development:
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Production Mode
-Use Docker Compose to run the full stack:
+### Production/Demo Mode (Docker Compose)
 ```bash
 docker-compose up
 ```
 
-This will start:
+This starts:
 - Backend API (port 8000)
 - Frontend UI (port 3000)
 - Redis cache
@@ -46,51 +50,57 @@ This will start:
 - Grafana dashboard (port 3002)
 
 ### AWS Deployment (Terraform)
-Infrastructure-as-code for AWS ECS/Fargate is documented in `docs/aws-deployment.md`.
+Infrastructure-as-code for ECS/Fargate is documented in `docs/aws-deployment.md`.
 
-### Testing the API
-You can use the provided test scripts in the `examples` directory:
+## Configuration
+Common environment variables:
+- `API_KEY_OPENAI`: OpenAI API key (for OpenAI-based evals)
+- `HF_TOKEN`: HuggingFace token (for datasets/models)
+- `REDTEAM_API_KEYS`: comma-separated API keys for auth
+- `CORS_ORIGINS`: allowed CORS origins
+- `LOG_LEVEL`: log level (default: INFO)
 
-```bash
-# Test bias detection
-python test_bias_detection.py
+Artifact storage (local/S3): see `docs/artifact-storage.md`.
 
-# Test toxicity detection
-python examples/toxicity_batch_example.py
-```
+## Authentication and Rate Limits
+- All evaluation endpoints require `X-API-Key`.
+- Default rate limits: batch 10/min, realtime 30/min, health 60/min.
 
 ## API Endpoints
+Full OpenAPI spec: `http://localhost:8000/docs`
 
-- `POST /toxicity-detection-batch`: Batch toxicity analysis
-- `POST /bias-detection-batch`: Batch bias analysis
-- `POST /toxicity-detection-realtime`: Real-time toxicity check
-- `POST /bias-detection-realtime`: Real-time bias check
-- `GET /health`: Service health check
+Core endpoints:
+- `POST /toxicity-detection-batch`
+- `POST /bias-detection-batch`
+- `POST /toxicity-detection-realtime`
+- `POST /bias-detection-realtime`
+- `POST /evaluate/guardrails`
+- `POST /protect/guardrails`
+- `POST /adversarial-robustness`
+- `POST /stereotype-benchmark`
+- `POST /generate-adversarial-prompts`
+- `POST /consistency-reliability`
+- `POST /misinformation-factuality`
+- `POST /refusal-consistency`
+- `POST /privacy-redteam`
+- `POST /hallucination-confidence`
+- `GET /datasets`
+- `GET /datasets/{name}`
+- `GET /health`
 
 ## Directory Structure
 ```
-RedTeamGO
-├── services/                  # Core services
-│   ├── bias_detection_dbias/  # Bias detection implementation
-│   ├── toxicity_detection/    # Toxicity detection implementation
-│   └── model_wrappers/        # Model interface implementations
+red-team-go
+├── services/                  # Evaluation services
 ├── frontend/                  # React frontend application
 ├── examples/                  # API usage examples
 ├── utils/                     # Shared utilities
+├── tests/                     # Test suite
 ├── main.py                    # FastAPI application entry point
-└── docker-compose.yml         # Container orchestration
+└── docker-compose.yml         # Local demo stack
 ```
 
-## Configuration
-The system can be configured through environment variables or Docker Compose:
-- Model endpoints and API keys
-- CORS settings
-- Resource limits
-- Monitoring configuration
-- Artifact storage configuration (local or S3) in `docs/artifact-storage.md`
-
 ## References
-The system implements methods from:
 - Bias Detection: Raza, S., et al. "Dbias: detecting biases and ensuring fairness in news articles." (2024)
 - Toxicity Detection: Perez, E., et al. "Red Teaming Language Models with Language Models." (2022)
 
