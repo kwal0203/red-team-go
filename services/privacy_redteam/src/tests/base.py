@@ -122,14 +122,7 @@ class BasePrivacyTest(ABC):
             Model's response text.
         """
         try:
-            # Try using system prompt if model supports it
-            if hasattr(model, "predict_with_system"):
-                response = model.predict_with_system(prompt, system_prompt)
-                if isinstance(response, list):
-                    return response[0] if response else ""
-                return response if response else ""
-
-            # Fallback: prepend system prompt to user prompt
+            # Prepend system prompt to user prompt
             combined = f"System: {system_prompt}\n\nUser: {prompt}"
             response = model.model_predict(combined)
             # model_predict returns a list, get first element
