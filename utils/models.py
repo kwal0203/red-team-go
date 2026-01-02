@@ -952,3 +952,65 @@ class ModelConfidenceResponse(BaseModel):
     all_methods: dict[str, MethodResult] | None = Field(
         None, description="Results from all methods (if include_all_methods=True)"
     )
+
+
+# =============================================================================
+# Dataset Models
+# =============================================================================
+
+
+class DatasetInfoResponse(BaseModel):
+    """Information about a dataset."""
+
+    name: str = Field(..., description="Dataset name")
+    category: str = Field(
+        ...,
+        description="Dataset category",
+        examples=["stereotype", "jailbreak", "toxicity", "harmful", "bias"],
+    )
+    description: str = Field(..., description="Dataset description")
+    source: str = Field(..., description="Dataset source URL")
+    citation: str = Field(..., description="Citation for the dataset")
+    size: int | None = Field(None, description="Number of items in the dataset")
+    huggingface_id: str | None = Field(None, description="HuggingFace dataset ID")
+
+
+class DatasetListResponse(BaseModel):
+    """Response containing list of available datasets."""
+
+    datasets: list[DatasetInfoResponse] = Field(
+        ..., description="List of available datasets"
+    )
+    total: int = Field(..., description="Total number of datasets")
+
+
+class DatasetItemResponse(BaseModel):
+    """A single item from a dataset."""
+
+    id: str = Field(..., description="Item ID")
+    text: str = Field(..., description="Item text content")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
+
+
+class DatasetSampleRequest(BaseModel):
+    """Request to get samples from a dataset."""
+
+    num_samples: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="Number of samples to retrieve (1-100)",
+    )
+
+
+class DatasetSampleResponse(BaseModel):
+    """Response containing dataset samples."""
+
+    dataset_name: str = Field(..., description="Name of the dataset")
+    samples: list[dict[str, Any]] = Field(..., description="Sample items from dataset")
+    num_samples: int = Field(..., description="Number of samples returned")
+    total_available: int | None = Field(
+        None, description="Total items available in dataset"
+    )

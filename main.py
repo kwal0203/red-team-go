@@ -13,6 +13,13 @@ from services.bias_detection_dbias.service import (
     dbias_service,
 )
 from services.consistency_reliability.service import consistency_reliability_service
+from services.datasets import (
+    DatasetCategory,
+    DatasetNotFoundError,
+    get_dataset,
+    get_dataset_info,
+    list_datasets,
+)
 from services.guardrails.service import (
     guardrails_evaluate_service,
     guardrails_protect_service,
@@ -35,6 +42,10 @@ from utils.models import (
     AuthErrorResponse,
     ConsistencyReliabilityRequest,
     ConsistencyReliabilityResponse,
+    DatasetInfoResponse,
+    DatasetListResponse,
+    DatasetSampleRequest,
+    DatasetSampleResponse,
     DetectionBatchBias,
     DetectionBatchToxicity,
     DetectionRealtimeBias,
@@ -134,6 +145,10 @@ TAGS_METADATA = [
     {
         "name": "Hallucination Detection",
         "description": "Detect hallucinations using model confidence from token log probabilities.",
+    },
+    {
+        "name": "Datasets",
+        "description": "Access and manage red-teaming benchmark datasets (StereoSet, CrowS-Pairs, BBQ, etc.).",
     },
 ]
 
@@ -1023,3 +1038,179 @@ def hallucination_confidence(
     except Exception as e:
         logger.error(f"Hallucination confidence check failed: {e}")
         raise HTTPException(status_code=500, detail=f"Check failed: {str(e)}") from e
+
+
+# =============================================================================
+# Dataset Endpoints
+# =============================================================================
+
+
+@app.get(
+    "/datasets",
+    response_model=DatasetListResponse,
+    tags=["Datasets"],
+)
+@limiter.limit(RATE_LIMIT_HEALTH)
+def list_available_datasets(
+    request: Request,
+    category: str | None = None,
+):
+    """
+    List all available datasets.
+
+    Returns metadata about all registered datasets, optionally filtered by category.
+    This endpoint is public and does not require authentication.
+
+    Categories:
+    - "stereotype": Bias and stereotype benchmarks (StereoSet, CrowS-Pairs, BBQ)
+    - "jailbreak": Jailbreak prompt datasets
+    - "toxicity": Toxicity evaluation datasets
+    - "harmful": Harmful content datasets
+    - "bias": General bias datasets
+
+    Rate Limit: 60 requests/minute
+
+    Args:
+        category: Optional category filter.
+
+    Returns:
+        DatasetListResponse with list of available datasets.
+    """
+    logger.info(f"Listing datasets with category filter: {category}")
+    try:
+        # Convert category string to enum if provided
+        cat_enum = None
+        if category:
+            try:
+                cat_enum = DatasetCategory(category)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid category '{category}'. Valid categories: {[c.value for c in DatasetCategory]}",
+                ) from e
+
+        datasets = list_datasets(category=cat_enum)
+        return DatasetListResponse(
+            datasets=[
+                DatasetInfoResponse(
+                    name=d.name,
+                    category=d.category.value,
+                    description=d.description,
+                    source=d.source,
+                    citation=d.citation,
+                    size=d.size,
+                    huggingface_id=d.huggingface_id,
+                )
+                for d in datasets
+            ],
+            total=len(datasets),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to list datasets: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to list datasets: {str(e)}"
+        ) from e
+
+
+@app.get(
+    "/datasets/{name}",
+    response_model=DatasetInfoResponse,
+    tags=["Datasets"],
+    responses={
+        404: {"model": ErrorResponse, "description": "Dataset not found"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+@limiter.limit(RATE_LIMIT_HEALTH)
+def get_dataset_details(
+    request: Request,
+    name: str,
+):
+    """
+    Get details about a specific dataset.
+
+    Returns metadata about the specified dataset including its source,
+    citation, size, and HuggingFace ID if available.
+    This endpoint is public and does not require authentication.
+
+    Rate Limit: 60 requests/minute
+
+    Args:
+        name: The dataset name (e.g., "stereoset", "crows_pairs", "bbq").
+
+    Returns:
+        DatasetInfoResponse with dataset metadata.
+    """
+    logger.info(f"Getting info for dataset: {name}")
+    try:
+        info = get_dataset_info(name)
+        return DatasetInfoResponse(
+            name=info.name,
+            category=info.category.value,
+            description=info.description,
+            source=info.source,
+            citation=info.citation,
+            size=info.size,
+            huggingface_id=info.huggingface_id,
+        )
+    except DatasetNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Failed to get dataset info: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get dataset info: {str(e)}"
+        ) from e
+
+
+@app.post(
+    "/datasets/{name}/sample",
+    response_model=DatasetSampleResponse,
+    tags=["Datasets"],
+    responses={
+        **COMMON_RESPONSES,
+        404: {"model": ErrorResponse, "description": "Dataset not found"},
+    },
+)
+@limiter.limit(RATE_LIMIT_REALTIME)
+def get_dataset_samples(
+    request: Request,
+    name: str,
+    args: DatasetSampleRequest,
+    api_key: APIKeyDep,
+):
+    """
+    Get sample items from a dataset.
+
+    Returns sample items from the specified dataset without loading the full dataset.
+    Useful for testing and demos.
+
+    Requires: X-API-Key header
+    Rate Limit: 30 requests/minute
+
+    Args:
+        name: The dataset name (e.g., "stereoset", "crows_pairs", "bbq").
+        args: Request with number of samples to retrieve.
+
+    Returns:
+        DatasetSampleResponse with sample items.
+    """
+    logger.info(f"Getting {args.num_samples} samples from dataset: {name}")
+    try:
+        loader = get_dataset(name)
+        samples = loader.get_sample(num_samples=args.num_samples)
+
+        return DatasetSampleResponse(
+            dataset_name=name,
+            samples=[s.to_dict() for s in samples],
+            num_samples=len(samples),
+            total_available=loader.info.size,
+        )
+    except DatasetNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Failed to get dataset samples: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get samples: {str(e)}"
+        ) from e
