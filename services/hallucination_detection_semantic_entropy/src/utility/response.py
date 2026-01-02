@@ -1,5 +1,5 @@
-from typing import Any
 import random
+from typing import Any
 
 from src.context import SemanticEntropyContext
 
@@ -30,8 +30,7 @@ def response_generator(context: SemanticEntropyContext, prompt: str) -> Any:
             messages = [{"role": "user", "content": random.choice(context.prompts)}]
         elif context.messages:
             messages = [
-                {"role": m["role"], "content": m["content"]}
-                for m in context.messages
+                {"role": m["role"], "content": m["content"]} for m in context.messages
             ]
         else:
             messages = [{"role": "user", "content": prompt}]

@@ -1,7 +1,6 @@
-from typing import List, Any, Dict
-
-import json
 import csv
+import json
+from typing import Any
 
 
 def hijack_log(results_hijack: Any):
@@ -49,7 +48,7 @@ def hijack_log(results_hijack: Any):
 
 
 def generate_report(
-    results: Dict, generated_summary: str, logprobs: List[Dict], entropy: Any
+    results: dict, generated_summary: str, logprobs: list[dict], entropy: Any
 ) -> None:
     """
     Generate JSON object containing results of hallucination detection and write
