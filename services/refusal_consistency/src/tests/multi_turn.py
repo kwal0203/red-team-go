@@ -194,14 +194,9 @@ class MultiTurnEscalationTest(BaseRefusalTest):
                 # For simplicity, we use the conversation approach
                 pass
 
-        # For models that support multi-turn, use conversation
-        # Otherwise, concatenate into a single prompt
-        if hasattr(model, "generate_with_messages"):
-            return self._get_conversation_response(model, messages)
-        else:
-            # Fallback: create a single prompt simulating the conversation
-            conversation_prompt = self._build_conversation_prompt(messages)
-            return self._get_model_response(model, conversation_prompt)
+        # Concatenate messages into a single prompt for the model
+        conversation_prompt = self._build_conversation_prompt(messages)
+        return self._get_model_response(model, conversation_prompt)
 
     def _build_conversation_prompt(self, messages: list[dict[str, str]]) -> str:
         """Build a single prompt from conversation messages.

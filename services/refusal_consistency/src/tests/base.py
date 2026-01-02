@@ -92,7 +92,10 @@ class BaseRefusalTest(ABC):
             Model's response text.
         """
         try:
-            response = model.generate(prompt)
+            response = model.model_predict(prompt)
+            # model_predict returns a list, get first element
+            if isinstance(response, list):
+                return response[0] if response else ""
             return response if response else ""
         except Exception as e:
             logger.error(f"Error getting model response: {e}")
@@ -109,18 +112,17 @@ class BaseRefusalTest(ABC):
             Model's response text.
         """
         try:
-            # Build conversation context
-            if hasattr(model, "generate_with_messages"):
-                response = model.generate_with_messages(messages)
-            else:
-                # Fallback: concatenate messages into a single prompt
-                conversation = ""
-                for msg in messages:
-                    role = msg["role"].upper()
-                    content = msg["content"]
-                    conversation += f"{role}: {content}\n\n"
-                conversation += "ASSISTANT:"
-                response = model.generate(conversation)
+            # Concatenate messages into a single prompt
+            conversation = ""
+            for msg in messages:
+                role = msg["role"].upper()
+                content = msg["content"]
+                conversation += f"{role}: {content}\n\n"
+            conversation += "ASSISTANT:"
+            response = model.model_predict(conversation)
+            # model_predict returns a list, get first element
+            if isinstance(response, list):
+                return response[0] if response else ""
             return response if response else ""
         except Exception as e:
             logger.error(f"Error getting conversation response: {e}")
