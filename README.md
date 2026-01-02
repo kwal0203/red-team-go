@@ -45,6 +45,9 @@ This will start:
 - Prometheus metrics (port 9090)
 - Grafana dashboard (port 3002)
 
+### AWS Deployment (Terraform)
+Infrastructure-as-code for AWS ECS/Fargate is documented in `docs/aws-deployment.md`.
+
 ### Testing the API
 You can use the provided test scripts in the `examples` directory:
 
