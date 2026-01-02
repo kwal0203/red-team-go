@@ -1049,20 +1049,17 @@ def hallucination_confidence(
     "/datasets",
     response_model=DatasetListResponse,
     tags=["Datasets"],
-    responses={
-        **COMMON_RESPONSES,
-    },
 )
 @limiter.limit(RATE_LIMIT_HEALTH)
 def list_available_datasets(
     request: Request,
     category: str | None = None,
-    api_key: APIKeyDep = None,
 ):
     """
     List all available datasets.
 
     Returns metadata about all registered datasets, optionally filtered by category.
+    This endpoint is public and does not require authentication.
 
     Categories:
     - "stereotype": Bias and stereotype benchmarks (StereoSet, CrowS-Pairs, BBQ)
@@ -1122,21 +1119,21 @@ def list_available_datasets(
     response_model=DatasetInfoResponse,
     tags=["Datasets"],
     responses={
-        **COMMON_RESPONSES,
         404: {"model": ErrorResponse, "description": "Dataset not found"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
 @limiter.limit(RATE_LIMIT_HEALTH)
 def get_dataset_details(
     request: Request,
     name: str,
-    api_key: APIKeyDep = None,
 ):
     """
     Get details about a specific dataset.
 
     Returns metadata about the specified dataset including its source,
     citation, size, and HuggingFace ID if available.
+    This endpoint is public and does not require authentication.
 
     Rate Limit: 60 requests/minute
 
