@@ -87,6 +87,7 @@ The system can be configured through environment variables or Docker Compose:
 - CORS settings
 - Resource limits
 - Monitoring configuration
+- Artifact storage configuration (local or S3) in `docs/artifact-storage.md`
 
 ## References
 The system implements methods from:
