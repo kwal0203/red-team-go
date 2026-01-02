@@ -76,6 +76,7 @@ interface ProtectResponse {
   input_safe: boolean;
   output_safe: boolean;
   violations: string[];
+  remediated_input?: string;
   remediated_output?: string;
   remediation?: {
     action_taken: string;
@@ -503,6 +504,15 @@ export default function Guardrails() {
                         <Box bg="blue.50" p={4} borderRadius="md">
                           <Text fontSize="sm"><strong>Action:</strong> {protectMutation.data.remediation.action_taken}</Text>
                           <Text fontSize="sm">{protectMutation.data.remediation.explanation}</Text>
+                        </Box>
+                      </Box>
+                    )}
+
+                    {protectMutation.data.remediated_input && (
+                      <Box>
+                        <Text fontWeight="semibold" mb={2}>Remediated Input:</Text>
+                        <Box bg="gray.50" p={4} borderRadius="md">
+                          <Text fontSize="sm">{protectMutation.data.remediated_input}</Text>
                         </Box>
                       </Box>
                     )}

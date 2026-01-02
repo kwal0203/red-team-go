@@ -139,6 +139,7 @@ def guardrails_protect_service(
         - output_safe: Whether output passed checks (if provided)
         - violations: List of all violations found
         - remediated_output: Modified output (if redaction applied)
+        - remediated_input: Modified input (if redaction applied)
         - input_result: Detailed input check result (if input provided)
         - output_result: Detailed output check result (if output provided)
     """
@@ -160,7 +161,8 @@ def guardrails_protect_service(
     output_safe = True
     input_result_dict: dict | None = None
     output_result_dict: dict | None = None
-    remediation_result: RemediationResult | None = None
+    input_remediation_result: RemediationResult | None = None
+    output_remediation_result: RemediationResult | None = None
 
     # Check input if provided
     if input_text:
@@ -169,6 +171,11 @@ def guardrails_protect_service(
         input_safe = len(input_check.violations) == 0
         all_violations.extend(input_check.violations)
         input_result_dict = input_check.to_dict()
+
+        # Apply remediation to input
+        input_remediation_result = remediator.remediate(
+            input_text, input_check, remediation_action
+        )
 
     # Check output if provided
     if output_text:
@@ -179,17 +186,31 @@ def guardrails_protect_service(
         output_result_dict = output_check.to_dict()
 
         # Apply remediation to output
-        remediation_result = remediator.remediate(
+        output_remediation_result = remediator.remediate(
             output_text, output_check, remediation_action
         )
 
-    # Determine if content should be allowed
-    if remediation_result:
-        allowed = remediation_result.allowed
-        remediated_output = remediation_result.remediated_content
-    else:
-        allowed = input_safe and output_safe
-        remediated_output = None
+    # Determine if content should be allowed based on remediation results
+    # Both input and output must be allowed for overall allowed=True
+    input_allowed = (
+        input_remediation_result.allowed if input_remediation_result else True
+    )
+    output_allowed = (
+        output_remediation_result.allowed if output_remediation_result else True
+    )
+    allowed = input_allowed and output_allowed
+
+    # Get remediated content
+    remediated_input = (
+        input_remediation_result.remediated_content
+        if input_remediation_result
+        else None
+    )
+    remediated_output = (
+        output_remediation_result.remediated_content
+        if output_remediation_result
+        else None
+    )
 
     logger.info(
         f"Protect check complete: allowed={allowed}, "
@@ -204,7 +225,9 @@ def guardrails_protect_service(
         "violations": list(set(all_violations)),  # Deduplicate
     }
 
-    # Add remediated output if available
+    # Add remediated content if available
+    if remediated_input is not None:
+        result["remediated_input"] = remediated_input
     if remediated_output is not None:
         result["remediated_output"] = remediated_output
 
@@ -213,6 +236,9 @@ def guardrails_protect_service(
         result["input_result"] = input_result_dict
     if output_result_dict:
         result["output_result"] = output_result_dict
+
+    # Add remediation info (prefer output, fall back to input)
+    remediation_result = output_remediation_result or input_remediation_result
     if remediation_result:
         result["remediation"] = {
             "action_taken": remediation_result.action_taken.value,
