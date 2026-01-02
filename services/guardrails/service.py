@@ -237,12 +237,16 @@ def guardrails_protect_service(
     if output_result_dict:
         result["output_result"] = output_result_dict
 
-    # Add remediation info (prefer output, fall back to input)
-    remediation_result = output_remediation_result or input_remediation_result
-    if remediation_result:
-        result["remediation"] = {
-            "action_taken": remediation_result.action_taken.value,
-            "explanation": remediation_result.explanation,
+    # Add separate remediation info for input and output
+    if input_remediation_result:
+        result["input_remediation"] = {
+            "action_taken": input_remediation_result.action_taken.value,
+            "explanation": input_remediation_result.explanation,
+        }
+    if output_remediation_result:
+        result["output_remediation"] = {
+            "action_taken": output_remediation_result.action_taken.value,
+            "explanation": output_remediation_result.explanation,
         }
 
     return result
