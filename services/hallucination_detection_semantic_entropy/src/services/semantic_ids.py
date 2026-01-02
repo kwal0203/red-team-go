@@ -11,7 +11,7 @@ def get_semantic_ids(strings_list, model, strict_entailment=False, example=None)
             implications = [implication_1, implication_2]
             # Check if none of the implications are 0 (contradiction) and not both of them are neutral.
             semantically_equivalent = (0 not in implications) and (
-                [1, 1] != implications
+                implications != [1, 1]
             )
 
         return semantically_equivalent

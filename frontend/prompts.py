@@ -1,5 +1,4 @@
 import pandas as pd
-from typing import List
 
 
 class PromptInjectionData:
@@ -26,13 +25,13 @@ class PromptInjectionData:
         """
         self.prompt_injection_df = pd.read_csv(filepath_or_buffer=path)
 
-    def get_prompts_all(self) -> List[str]:
+    def get_prompts_all(self) -> list[str]:
         """
         Get all prompts in prompt database.
         """
         return self.prompt_injection_df.prompt.tolist()
 
-    def get_prompts_name(self, attack_name: str) -> List[str]:
+    def get_prompts_name(self, attack_name: str) -> list[str]:
         """
         Get all prompts of a given attack from prompt database.
 
@@ -43,7 +42,7 @@ class PromptInjectionData:
             self.prompt_injection_df.name == attack_name
         ].prompt.tolist()
 
-    def get_prompts_type(self, attack_type: str) -> List[str]:
+    def get_prompts_type(self, attack_type: str) -> list[str]:
         """
         Get all prompts of a given type form prompt database.
 
@@ -54,13 +53,13 @@ class PromptInjectionData:
             self.prompt_injection_df.group == attack_type
         ].prompt.tolist()
 
-    def get_attack_names(self) -> List[str]:
+    def get_attack_names(self) -> list[str]:
         """
         Get the name of all attacks in the prompt database.
         """
         return list(set(self.prompt_injection_df.name))
 
-    def get_attack_types(self) -> List[str]:
+    def get_attack_types(self) -> list[str]:
         """
         Get all attack types of prompts in the database.
         """

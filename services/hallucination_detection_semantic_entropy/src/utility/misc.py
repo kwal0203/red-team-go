@@ -1,4 +1,3 @@
-from typing import List, Tuple
 from src.context import SemanticEntropyContext
 from src.utility.response import response_generator
 
@@ -17,7 +16,7 @@ def get_generations(
     prompt: str,
     num_generations: int = 10,
     temperature: float = 0.5,
-) -> List[Tuple[str, List]]:
+) -> list[tuple[str, list]]:
     """
     Generate multiple responses for semantic entropy calculation.
 

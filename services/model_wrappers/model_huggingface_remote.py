@@ -1,8 +1,7 @@
-from services.model_wrappers.base_model_remote import APIModel
-from typing import Optional, List
-from utils.config import get_hf_key
-
 import openai
+
+from services.model_wrappers.base_model_remote import APIModel
+from utils.config import get_hf_key
 
 
 class APIModelHuggingFace(APIModel):
@@ -15,8 +14,8 @@ class APIModelHuggingFace(APIModel):
     def __init__(
         self,
         base_url: str = "http://localhost:8995/v1",
-        name: Optional[str] = "huggingface_tgi_model",
-        description: Optional[str] = "TGI model wrapper",
+        name: str | None = "huggingface_tgi_model",
+        description: str | None = "TGI model wrapper",
     ) -> None:
         """
         Initializes a HuggingFace model using TGI with the given name and description.
@@ -25,7 +24,7 @@ class APIModelHuggingFace(APIModel):
         self.hf_token = get_hf_key()
         self.client = openai.OpenAI(base_url=base_url, api_key=self.hf_token)
 
-    def _model_predict(self, inputs: List[str]) -> List[str]:
+    def _model_predict(self, inputs: list[str]) -> list[str]:
         """
         Sends preprocessed inputs to HuggingFace model and retrieves responses.
 

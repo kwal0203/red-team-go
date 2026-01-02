@@ -1,8 +1,7 @@
-from services.model_wrappers.base_model_remote import APIModel
-from typing import List, Optional
-from utils.config import get_openai_key
-
 import openai
+
+from services.model_wrappers.base_model_remote import APIModel
+from utils.config import get_openai_key
 
 
 class APIModelGPTModerator(APIModel):
@@ -13,8 +12,8 @@ class APIModelGPTModerator(APIModel):
 
     def __init__(
         self,
-        name: Optional[str] = "openai_moderator_api_model",
-        description: Optional[str] = "OpenAI Moderator model wrapper",
+        name: str | None = "openai_moderator_api_model",
+        description: str | None = "OpenAI Moderator model wrapper",
     ) -> None:
         """
         Initializes the OpenAI Moderator API model with the given name and description.
@@ -23,7 +22,7 @@ class APIModelGPTModerator(APIModel):
         openai.api_key = get_openai_key()
         self.client = openai
 
-    def _model_predict(self, inputs: List[str]) -> List[str]:
+    def _model_predict(self, inputs: list[str]) -> list[str]:
         """
         Sends inputs to the OpenAI Moderator API and retrieves moderation results.
 

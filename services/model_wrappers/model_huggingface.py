@@ -1,9 +1,9 @@
-from services.model_wrappers.base_model import WrapperModel
-from typing import Optional, List
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
 )
+
+from services.model_wrappers.base_model import WrapperModel
 from utils.config import get_device
 
 
@@ -27,8 +27,8 @@ class HuggingFaceModel(WrapperModel):
 
     def __init__(
         self,
-        name: Optional[str] = "my_huggingface_model",
-        description: Optional[str] = "Large language model",
+        name: str | None = "my_huggingface_model",
+        description: str | None = "Large language model",
     ) -> None:
         """
         Initializes the HuggingFaceModel class.
@@ -44,7 +44,7 @@ class HuggingFaceModel(WrapperModel):
         self.device = get_device()
         self.model.to(self.device)
 
-    def preprocess(self, data: List[str]) -> List[str]:
+    def preprocess(self, data: list[str]) -> list[str]:
         """
         Preprocess prompt.
 
@@ -68,7 +68,7 @@ class HuggingFaceModel(WrapperModel):
         """
         return generated_text
 
-    def model_predict(self, data: List[str]) -> List[str]:
+    def model_predict(self, data: list[str]) -> list[str]:
         """
         Obtain generated responses after inputting prompts. Perform input and
         output processing if required.
@@ -81,7 +81,7 @@ class HuggingFaceModel(WrapperModel):
         output = self.postprocess(responses=response)
         return output
 
-    def _model_predict(self, inputs) -> List[str]:
+    def _model_predict(self, inputs) -> list[str]:
         """
         Helper function for obtaining generated response from input prompts.
 

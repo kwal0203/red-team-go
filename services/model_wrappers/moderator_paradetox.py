@@ -1,12 +1,11 @@
-from services.model_wrappers.base_model import WrapperModel
-from typing import Optional, List
-from transformers import (
-    RobertaTokenizer,
-    RobertaForSequenceClassification,
-)
-from utils.config import get_device
-
 import numpy as np
+from transformers import (
+    RobertaForSequenceClassification,
+    RobertaTokenizer,
+)
+
+from services.model_wrappers.base_model import WrapperModel
+from utils.config import get_device
 
 
 class ParadetoxModerator(WrapperModel):
@@ -34,8 +33,8 @@ class ParadetoxModerator(WrapperModel):
 
     def __init__(
         self,
-        name: Optional[str] = "my_paradetox_model",
-        description: Optional[str] = "Local large language model",
+        name: str | None = "my_paradetox_model",
+        description: str | None = "Local large language model",
     ) -> None:
         """
         Initializes the ParaDetox wrapper class.
@@ -54,7 +53,7 @@ class ParadetoxModerator(WrapperModel):
         self.device = get_device()
         self.model.to(self.device)
 
-    def preprocess(self, data: List[str]) -> List[str]:
+    def preprocess(self, data: list[str]) -> list[str]:
         """
         Preprocess prompt.
 
@@ -72,7 +71,7 @@ class ParadetoxModerator(WrapperModel):
         """
         return generated_text
 
-    def model_predict(self, data: List[str]) -> List[str]:
+    def model_predict(self, data: list[str]) -> list[str]:
         """
         Obtain generated responses after inputting prompts. Perform input and
         output processing if required.
@@ -86,7 +85,7 @@ class ParadetoxModerator(WrapperModel):
         output = self.postprocess(generated_text=response)
         return output
 
-    def _model_predict(self, inputs) -> List[str]:
+    def _model_predict(self, inputs) -> list[str]:
         """
         Helper function for obtaining generated response from input prompts.
 

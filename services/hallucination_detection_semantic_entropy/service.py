@@ -1,10 +1,11 @@
-from typing import Any, Dict, Optional
-import openai
+from typing import Any
 
+import openai
+from src.context import SemanticEntropyContext
 from src.models.entailment_model import EntailmentDeberta
 from src.services.semantic_ids import get_semantic_ids
 from src.utility.misc import get_generations
-from src.context import SemanticEntropyContext
+
 from utils.config import get_openai_key
 
 
@@ -13,8 +14,8 @@ def semantic_entropy_service(
     model_name: str = "gpt-3.5-turbo",
     num_generations: int = 5,
     entailment_model_type: str = "deberta",
-    base_url: Optional[str] = None,
-) -> Dict[str, Any]:
+    base_url: str | None = None,
+) -> dict[str, Any]:
     """
     Semantic entropy hallucination detection service.
 
