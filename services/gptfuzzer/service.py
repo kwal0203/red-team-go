@@ -5,6 +5,8 @@ experimental GPTFUZZER prototype structure while remaining dependency-light.
 It does not call external models; it generates mutated variants locally.
 """
 
+import json
+import os
 import random
 import uuid
 from typing import Any
@@ -65,9 +67,20 @@ def gptfuzzer_service(
         "iterations": iterations,
     }
 
-    return GPTFuzzerResponse(
+    response = GPTFuzzerResponse(
         method="gptfuzzer",
         prompt=prompt,
         variants=variants,
         metadata=metadata,
     )
+    _persist_results("gptfuzzer", metadata["run_id"], response)
+    return response
+
+
+def _persist_results(method: str, run_id: str, response: GPTFuzzerResponse) -> None:
+    """Persist GPTFUZZER run to results/{method}/{run_id}.json."""
+    results_dir = os.path.join("results", method)
+    os.makedirs(results_dir, exist_ok=True)
+    path = os.path.join(results_dir, f"{run_id}.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(response.model_dump(), f, ensure_ascii=False, indent=2)

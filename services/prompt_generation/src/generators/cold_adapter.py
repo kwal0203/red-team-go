@@ -3,6 +3,8 @@
 Generates soft-prompt inspired adversarial text locally without gradients.
 """
 
+import json
+import os
 import random
 import time
 import uuid
@@ -87,4 +89,15 @@ class ColdAttackPromptGenerator(BaseGenerator):
                 )
             )
 
+        _persist_results("cold", run_id, outputs)
+
         return outputs
+
+
+def _persist_results(method: str, run_id: str, prompts: list[GeneratedPrompt]) -> None:
+    """Persist generated prompts to results/{method}/{run_id}.json."""
+    results_dir = os.path.join("results", method)
+    os.makedirs(results_dir, exist_ok=True)
+    path = os.path.join(results_dir, f"{run_id}.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump([p.to_dict() for p in prompts], f, ensure_ascii=False, indent=2)

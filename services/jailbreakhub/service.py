@@ -4,6 +4,8 @@ This performs simple clustering (by prompt length buckets) and returns clusters.
 It does not call external models; ASR replay can be added later.
 """
 
+import json
+import os
 import uuid
 
 from services.jailbreakhub.api import (
@@ -39,9 +41,20 @@ def jailbreakhub_service(request: JailbreakHubRequest) -> JailbreakHubResponse:
         "prototype_path": "experimental/iterative/do-anything/main.py",
     }
 
-    return JailbreakHubResponse(
+    response = JailbreakHubResponse(
         method="jailbreakhub",
         total_prompts=len(prompts),
         clusters=clusters,
         metadata=metadata,
     )
+    _persist_results("jailbreakhub", metadata["run_id"], response)
+    return response
+
+
+def _persist_results(method: str, run_id: str, response: JailbreakHubResponse) -> None:
+    """Persist analytics results to results/{method}/{run_id}.json."""
+    results_dir = os.path.join("results", method)
+    os.makedirs(results_dir, exist_ok=True)
+    path = os.path.join(results_dir, f"{run_id}.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(response.model_dump(), f, ensure_ascii=False, indent=2)
