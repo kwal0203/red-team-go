@@ -477,7 +477,7 @@ class PromptGenerationRequest(BaseModel):
     generator: str = Field(
         "llm",
         description="Generator method to use",
-        examples=["llm", "genetic", "pair", "sap", "autodan", "gptfuzzer"],
+        examples=["llm", "genetic", "pair", "sap", "aart", "autodan", "gptfuzzer"],
     )
     num_prompts: int = Field(
         10, ge=1, le=50, description="Number of prompts to generate"

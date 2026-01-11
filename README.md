@@ -60,6 +60,10 @@ Common environment variables:
 - `OPENROUTER_BASE_URL`: Optional override for OpenRouter base URL (default https://openrouter.ai/api/v1)
 - `OPENROUTER_MODEL`: Default OpenRouter model id (e.g., deepseek/deepseek-chat)
 - `DEFAULT_MODEL_PROVIDER`: Set to `openai`, `openrouter`, or `huggingface` to use when requests omit a provider
+- `AART_BACKEND`: Backend for AART generation (`openai` or `openrouter`, default follows DEFAULT_MODEL_PROVIDER)
+- `AART_MODEL`: Model id to use for AART generation (defaults to provider model)
+- `AART_BASE_URL`: Optional base URL override for AART when using OpenRouter-compatible gateways
+- `AART_DRY_RUN`: Set true to force offline/local AART generation (defaults to true when API key missing)
 - `HF_TOKEN`: HuggingFace token (for datasets/models)
 - `REDTEAM_API_KEYS`: comma-separated API keys for auth
 - `CORS_ORIGINS`: allowed CORS origins
@@ -90,6 +94,7 @@ Core endpoints:
 - `POST /privacy-redteam`
 - `POST /hallucination-confidence`
 - `POST /gptfuzzer`
+- `POST /aart`
 - `POST /jailbreakhub-analytics`
 - `GET /datasets`
 - `GET /datasets/{name}`

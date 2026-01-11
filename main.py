@@ -1,12 +1,15 @@
 """RedTeamGo - LLM Red Teaming and Safety Evaluation API."""
 
 import logging
+import os
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 
+from services.aart.api import AARTRequest, AARTResponse
+from services.aart.service import aart_service
 from services.adversarial_robustness.service import adversarial_robustness_service
 from services.bias_detection_dbias.service import (
     bias_detection_realtime_service,
@@ -1361,6 +1364,34 @@ def get_dataset_samples(
 # =============================================================================
 # Adversarial Search Endpoints
 # =============================================================================
+
+
+@app.post(
+    "/aart",
+    response_model=AARTResponse,
+    tags=["Adversarial Search"],
+    responses={
+        **COMMON_RESPONSES,
+        200: {"description": "AART prompt generation successful"},
+    },
+)
+@limiter.limit(RATE_LIMIT_BATCH)
+def run_aart(
+    request: Request,
+    args: AARTRequest,
+    api_key: APIKeyDep,
+):
+    """Generate AART-style region-aware harmful prompts."""
+    logger.info(
+        "AART run: num_prompts=%s backend=%s",
+        args.num_prompts,
+        args.backend or os.getenv("AART_BACKEND", "auto"),
+    )
+    try:
+        return aart_service(args)
+    except Exception as e:
+        logger.error(f"AART run failed: {e}")
+        raise HTTPException(status_code=500, detail=f"AART failed: {str(e)}") from e
 
 
 @app.post(

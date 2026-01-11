@@ -37,7 +37,7 @@ GENERATOR_REGISTRY = {
     "llm": LLMPromptGenerator,
     "genetic": GeneticPromptGenerator,
     "pair": PAIRPromptGenerator,
-    # Experimental methods (prototypes under /experimental)
+    # Experimental methods (integrated from prototype implementations)
     "sap": SAPPromptGenerator,
     "aart": AARTPromptGenerator,
     "stp": STPPromptGenerator,
@@ -69,7 +69,7 @@ def prompt_generation_service(
 
     Generators:
         - Core: "llm", "genetic", "pair"
-        - Experimental prototypes under /experimental:
+        - Experimental methods:
           "sap", "aart", "stp", "dsn", "manyshot", "advprompter",
           "autodan", "cold", "crt", "gptfuzzer", "jailbreakhub",
           "blackbox_pair", "datasets"

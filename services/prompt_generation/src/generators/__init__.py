@@ -1,5 +1,6 @@
 """Prompt generators for adversarial testing."""
 
+from services.prompt_generation.src.generators.aart_adapter import AARTPromptGenerator
 from services.prompt_generation.src.generators.advprompter_adapter import (
     AdvPrompterPromptGenerator,
 )
@@ -20,7 +21,6 @@ from services.prompt_generation.src.generators.cold_adapter import (
 from services.prompt_generation.src.generators.crt_adapter import CRTPromptGenerator
 from services.prompt_generation.src.generators.dsn_adapter import DSNPromptGenerator
 from services.prompt_generation.src.generators.experimental import (
-    AARTPromptGenerator,
     AdvPrompterGenerator,
     DatasetPromptGenerator,
     ExperimentalPromptGenerator,
