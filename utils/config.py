@@ -9,6 +9,34 @@ def get_openai_key():
     return os.getenv("API_KEY_OPENAI")
 
 
+def get_openai_model_name() -> str:
+    return os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+
+
+def get_openrouter_key():
+    return os.getenv("OPENROUTER_API_KEY")
+
+
+def get_openrouter_base_url() -> str:
+    return os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+
+
+def get_openrouter_model_name() -> str:
+    return os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat")
+
+
+def get_default_model_provider() -> str | None:
+    """
+    Return the default provider when a request omits provider hints.
+
+    Supported values: openai, openrouter, huggingface.
+    """
+    provider = os.getenv("DEFAULT_MODEL_PROVIDER")
+    if provider:
+        return provider.lower()
+    return None
+
+
 def get_device():
     return os.getenv("DEVICE", "cpu")
 

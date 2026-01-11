@@ -20,10 +20,14 @@ from services.datasets import (
     get_dataset_info,
     list_datasets,
 )
+from services.gptfuzzer.api import GPTFuzzerRequest, GPTFuzzerResponse
+from services.gptfuzzer.service import gptfuzzer_service
 from services.guardrails.service import (
     guardrails_evaluate_service,
     guardrails_protect_service,
 )
+from services.jailbreakhub.api import JailbreakHubRequest, JailbreakHubResponse
+from services.jailbreakhub.service import jailbreakhub_service
 from services.misinformation_factuality.service import (
     misinformation_factuality_service,
 )
@@ -35,6 +39,7 @@ from services.toxicity_detection.service import (
     toxicity_detection_realtime_service,
     toxicity_detection_service,
 )
+from utils.artifact_storage import store_evaluation_artifact
 from utils.auth import APIKeyDep
 from utils.models import (
     AdversarialRobustnessRequest,
@@ -80,7 +85,6 @@ from utils.rate_limit import (
     limiter,
     rate_limit_exceeded_handler,
 )
-from utils.artifact_storage import store_evaluation_artifact
 
 # Configure logging
 logging.basicConfig(
@@ -150,6 +154,14 @@ TAGS_METADATA = [
     {
         "name": "Datasets",
         "description": "Access and manage red-teaming benchmark datasets (StereoSet, CrowS-Pairs, BBQ, etc.).",
+    },
+    {
+        "name": "Adversarial Search",
+        "description": "Iterative jailbreak search and mutation methods (e.g., GPTFUZZER).",
+    },
+    {
+        "name": "Analytics",
+        "description": "Jailbreak clustering and coverage analytics (JAILBREAKHUB).",
     },
 ]
 
@@ -1343,4 +1355,78 @@ def get_dataset_samples(
         logger.error(f"Failed to get dataset samples: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to get samples: {str(e)}"
+        ) from e
+
+
+# =============================================================================
+# Adversarial Search Endpoints
+# =============================================================================
+
+
+@app.post(
+    "/gptfuzzer",
+    response_model=GPTFuzzerResponse,
+    tags=["Adversarial Search"],
+    responses={
+        **COMMON_RESPONSES,
+        200: {"description": "GPTFUZZER variant generation successful"},
+    },
+)
+@limiter.limit(RATE_LIMIT_BATCH)
+def run_gptfuzzer(
+    request: Request,
+    args: GPTFuzzerRequest,
+    api_key: APIKeyDep,
+):
+    """Run GPTFUZZER-style template mutation."""
+    logger.info(
+        f"GPTFUZZER run: prompt length={len(args.prompt)}, "
+        f"variants={args.num_variants}, iterations={args.max_iterations}"
+    )
+    try:
+        result = gptfuzzer_service(
+            model={"name": "default"},
+            prompt=args.prompt,
+            num_variants=args.num_variants,
+            max_iterations=args.max_iterations,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"GPTFUZZER run failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"GPTFUZZER failed: {str(e)}"
+        ) from e
+
+
+# =============================================================================
+# Analytics Endpoints
+# =============================================================================
+
+
+@app.post(
+    "/jailbreakhub-analytics",
+    response_model=JailbreakHubResponse,
+    tags=["Analytics"],
+    responses={
+        **COMMON_RESPONSES,
+        200: {"description": "JAILBREAKHUB analytics complete"},
+    },
+)
+@limiter.limit(RATE_LIMIT_BATCH)
+def jailbreakhub_analytics(
+    request: Request,
+    args: JailbreakHubRequest,
+    api_key: APIKeyDep,
+):
+    """Cluster jailbreak prompts and return simple analytics."""
+    logger.info(
+        f"JAILBREAKHUB analytics: prompts={len(args.prompts)}, "
+        f"max_samples={args.max_samples}"
+    )
+    try:
+        return jailbreakhub_service(args)
+    except Exception as e:
+        logger.error(f"JAILBREAKHUB analytics failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"JAILBREAKHUB failed: {str(e)}"
         ) from e

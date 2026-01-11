@@ -1,7 +1,7 @@
 import openai
 
 from services.model_wrappers.base_model_remote import APIModel
-from utils.config import get_openai_key
+from utils.config import get_openai_key, get_openai_model_name
 
 
 class APIModelOpenai(APIModel):
@@ -14,6 +14,7 @@ class APIModelOpenai(APIModel):
         self,
         name: str | None = "openai_api_model",
         description: str | None = "OpenAI model wrapper",
+        model_name: str | None = None,
     ) -> None:
         """
         Initializes the OpenAI API model with the given name and description.
@@ -21,6 +22,7 @@ class APIModelOpenai(APIModel):
         super().__init__(name=name, description=description)
         openai.api_key = get_openai_key()
         self.client = openai
+        self.model_name = model_name or get_openai_model_name()
 
     def _model_predict(self, inputs: list[str]) -> list[str]:
         """
@@ -41,7 +43,7 @@ class APIModelOpenai(APIModel):
                         # {"role": "system", "content": "You are a helpful assistant."},
                         {"role": "user", "content": input_text},
                     ],
-                    model="gpt-3.5-turbo",
+                    model=self.model_name,
                     max_tokens=150,
                     temperature=0.7,
                 )

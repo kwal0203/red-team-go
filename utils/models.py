@@ -77,7 +77,11 @@ class Model(BaseModel):
     """Configuration for a target LLM to evaluate."""
 
     name: str = Field(
-        ..., description="Model identifier (must contain 'openai' or 'huggingface')"
+        ...,
+        description=(
+            "Model identifier (must contain 'openai', 'openrouter', or 'huggingface'; "
+            "or use 'default' with DEFAULT_MODEL_PROVIDER)"
+        ),
     )
     description: str = Field(..., description="Description of the model")
     base_url: str | None = Field(
@@ -97,9 +101,18 @@ class Model(BaseModel):
                     "model_name": "gpt-4",
                 },
                 {
+                    "name": "openrouter-deepseek",
+                    "description": "DeepSeek via OpenRouter",
+                    "model_name": "deepseek/deepseek-chat",
+                },
+                {
                     "name": "huggingface-llama",
                     "description": "Llama 2 via HuggingFace TGI",
                     "base_url": "http://localhost:8080",
+                },
+                {
+                    "name": "default",
+                    "description": "Uses DEFAULT_MODEL_PROVIDER env var",
                 },
             ]
         }
@@ -464,7 +477,7 @@ class PromptGenerationRequest(BaseModel):
     generator: str = Field(
         "llm",
         description="Generator method to use",
-        examples=["llm", "genetic", "pair"],
+        examples=["llm", "genetic", "pair", "sap", "autodan", "gptfuzzer"],
     )
     num_prompts: int = Field(
         10, ge=1, le=50, description="Number of prompts to generate"
@@ -474,6 +487,57 @@ class PromptGenerationRequest(BaseModel):
     )
     evaluate: bool = Field(
         True, description="Whether to evaluate prompts against target model"
+    )
+
+
+class PromptICLExample(BaseModel):
+    """In-context learning example stored alongside a generated artifact."""
+
+    user: str = Field(..., description="User/message side of the example")
+    assistant: str = Field(..., description="Assistant/response side of the example")
+
+
+class PromptArtifact(BaseModel):
+    """Structured jailbreak artifact components."""
+
+    system: str | None = Field(
+        None, description="System prompt used to steer the jailbreak persona"
+    )
+    instruction: str | None = Field(None, description="Primary instruction text")
+    persona: str | None = Field(None, description="Persona or role assignment")
+    suffix: str | None = Field(None, description="Adversarial suffix or token list")
+    icl_examples: list[PromptICLExample] = Field(
+        default_factory=list, description="Optional in-context learning examples"
+    )
+
+
+class GenerationMetrics(BaseModel):
+    """Evaluation metrics emitted by generators."""
+
+    asr: float | None = Field(None, ge=0, le=1, description="Attack success rate")
+    judge_score: float | None = Field(
+        None, ge=0, le=10, description="Score from central judge (1-10)"
+    )
+    refusal_rate: float | None = Field(
+        None, ge=0, le=1, description="Fraction of refusals observed"
+    )
+    novelty: float | None = Field(
+        None, ge=0, le=1, description="Novelty/uniqueness score"
+    )
+    cost: float | None = Field(None, ge=0, description="Estimated cost (USD)")
+    tokens: int | None = Field(None, ge=0, description="Total tokens consumed")
+    latency_ms: float | None = Field(None, ge=0, description="End-to-end latency")
+
+
+class GenerationRunMetadata(BaseModel):
+    """Metadata describing the generator run environment."""
+
+    method: str = Field(..., description="Identifier for the red-teaming method")
+    backend: str | None = Field(None, description="Backend/model used for generation")
+    run_id: str | None = Field(None, description="Unique run id or timestamp")
+    logs_path: str | None = Field(None, description="Path to logs or trace files")
+    config: dict[str, Any] = Field(
+        default_factory=dict, description="Resolved configuration used for the run"
     )
 
 
@@ -487,6 +551,15 @@ class GeneratedPromptResult(BaseModel):
     )
     evaluation: dict[str, Any] | None = Field(
         None, description="Evaluation results if evaluated"
+    )
+    artifact: PromptArtifact | None = Field(
+        None, description="Structured jailbreak artifact (if produced)"
+    )
+    metrics: GenerationMetrics | None = Field(
+        None, description="Evaluation metrics returned by the generator"
+    )
+    run_metadata: GenerationRunMetadata | None = Field(
+        None, description="Execution metadata for reproducibility"
     )
 
 

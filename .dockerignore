@@ -1,6 +1,8 @@
 # Ignore data directory and database files
 data/
 *.db
+results/
+logs/
 
 # Python
 __pycache__/
@@ -28,6 +30,9 @@ wheels/
 # Virtual Environment
 venv/
 ENV/
+.venv/
+.pytest_cache/
+.cache/
 
 # IDE
 .idea/
@@ -37,3 +42,11 @@ ENV/
 
 # Logs
 *.log
+
+# VCS and large contexts
+.git/
+experimental/
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/build/

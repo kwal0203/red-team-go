@@ -11,9 +11,22 @@ from services.prompt_generation.src.evaluator import (
     PromptEvaluator,
 )
 from services.prompt_generation.src.generators import (
+    AARTPromptGenerator,
+    AdvPrompterPromptGenerator,
+    AutoDANPromptGenerator,
+    BlackBoxPAIRPromptGenerator,
+    ColdAttackPromptGenerator,
+    CRTPromptGenerator,
+    DatasetPromptGenerator,
+    DSNPromptGenerator,
     GeneticPromptGenerator,
+    GPTFuzzerPromptGenerator,
+    JailbreakHubGenerator,
     LLMPromptGenerator,
+    ManyShotPromptGenerator,
     PAIRPromptGenerator,
+    SAPPromptGenerator,
+    STPPromptGenerator,
 )
 from utils.model_factory import create_target_model
 
@@ -24,6 +37,20 @@ GENERATOR_REGISTRY = {
     "llm": LLMPromptGenerator,
     "genetic": GeneticPromptGenerator,
     "pair": PAIRPromptGenerator,
+    # Experimental methods (prototypes under /experimental)
+    "sap": SAPPromptGenerator,
+    "aart": AARTPromptGenerator,
+    "stp": STPPromptGenerator,
+    "dsn": DSNPromptGenerator,
+    "manyshot": ManyShotPromptGenerator,
+    "advprompter": AdvPrompterPromptGenerator,
+    "autodan": AutoDANPromptGenerator,
+    "cold": ColdAttackPromptGenerator,
+    "crt": CRTPromptGenerator,
+    "gptfuzzer": GPTFuzzerPromptGenerator,
+    "jailbreakhub": JailbreakHubGenerator,
+    "blackbox_pair": BlackBoxPAIRPromptGenerator,
+    "datasets": DatasetPromptGenerator,
 }
 
 
@@ -40,11 +67,18 @@ def prompt_generation_service(
     Uses the specified generator to create adversarial prompts
     and optionally evaluates them against the target model.
 
+    Generators:
+        - Core: "llm", "genetic", "pair"
+        - Experimental prototypes under /experimental:
+          "sap", "aart", "stp", "dsn", "manyshot", "advprompter",
+          "autodan", "cold", "crt", "gptfuzzer", "jailbreakhub",
+          "blackbox_pair", "datasets"
+
     Args:
         model: Target LLM configuration.
         target_category: Category of prompts to generate
             (e.g., "jailbreak", "harmful", "bias", "toxicity").
-        generator: Generator method to use ("llm", "genetic", "pair").
+        generator: Generator method to use.
         num_prompts: Number of prompts to generate.
         seed_prompt: Optional seed prompt for generation.
         evaluate: Whether to evaluate prompts against the target model.

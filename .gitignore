@@ -1,15 +1,23 @@
-cache/
-.vscode/
-**/__pycache__/
+# Environments and caches
 .env
-*.html
-!frontend/public/index.html
+.venv/
 .pytest_cache
-data/
+**/__pycache__/
+cache/
+
+# Editors/IDE
+.vscode/
+
+# Node/Frontend
 node_modules
 build
+*.html
+!frontend/public/index.html
+
+# Data/Artifacts
+data/
 information/
-plan.txt
-.venv/
-CLAUDE.md
 experimental/
+
+# Project docs/plan
+CLAUDE.md

@@ -55,6 +55,11 @@ Infrastructure-as-code for ECS/Fargate is documented in `docs/aws-deployment.md`
 ## Configuration
 Common environment variables:
 - `API_KEY_OPENAI`: OpenAI API key (for OpenAI-based evals)
+- `OPENAI_MODEL`: Default OpenAI model id (e.g., gpt-3.5-turbo)
+- `OPENROUTER_API_KEY`: OpenRouter API key (for OpenRouter-backed models)
+- `OPENROUTER_BASE_URL`: Optional override for OpenRouter base URL (default https://openrouter.ai/api/v1)
+- `OPENROUTER_MODEL`: Default OpenRouter model id (e.g., deepseek/deepseek-chat)
+- `DEFAULT_MODEL_PROVIDER`: Set to `openai`, `openrouter`, or `huggingface` to use when requests omit a provider
 - `HF_TOKEN`: HuggingFace token (for datasets/models)
 - `REDTEAM_API_KEYS`: comma-separated API keys for auth
 - `CORS_ORIGINS`: allowed CORS origins
@@ -84,6 +89,8 @@ Core endpoints:
 - `POST /refusal-consistency`
 - `POST /privacy-redteam`
 - `POST /hallucination-confidence`
+- `POST /gptfuzzer`
+- `POST /jailbreakhub-analytics`
 - `GET /datasets`
 - `GET /datasets/{name}`
 - `GET /health`
