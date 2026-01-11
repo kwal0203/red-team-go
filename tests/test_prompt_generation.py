@@ -545,6 +545,27 @@ class TestPromptGenerationEndpointValidation:
         assert len(data["prompts"]) == 2
         assert data["summary"]["total_generated"] == 2
 
+    def test_sap_generator_returns_prompts(self, client):
+        """Test that SAP generator returns prompts."""
+        response = client.post(
+            "/generate-adversarial-prompts",
+            json={
+                "model": {
+                    "name": "openai-test",
+                    "description": "Test model",
+                },
+                "target_category": "jailbreak",
+                "generator": "sap",
+                "num_prompts": 3,
+                "evaluate": False,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["generator"] == "sap"
+        assert len(data["prompts"]) == 3
+        assert data["summary"]["total_generated"] == 3
+
     def test_aart_generator_returns_prompts(self, client):
         """Test that AART generator returns prompts offline."""
         response = client.post(

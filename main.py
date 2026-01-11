@@ -37,6 +37,8 @@ from services.misinformation_factuality.service import (
 from services.privacy_redteam.service import privacy_redteam_service
 from services.prompt_generation.service import prompt_generation_service
 from services.refusal_consistency.service import refusal_consistency_service
+from services.sap.api import SAPRequest, SAPResponse
+from services.sap.service import sap_service
 from services.stereotype_benchmarks.service import stereotype_benchmark_service
 from services.toxicity_detection.service import (
     toxicity_detection_realtime_service,
@@ -1364,6 +1366,35 @@ def get_dataset_samples(
 # =============================================================================
 # Adversarial Search Endpoints
 # =============================================================================
+
+
+@app.post(
+    "/sap",
+    response_model=SAPResponse,
+    tags=["Adversarial Search"],
+    responses={
+        **COMMON_RESPONSES,
+        200: {"description": "SAP prompt generation successful"},
+    },
+)
+@limiter.limit(RATE_LIMIT_BATCH)
+def run_sap(
+    request: Request,
+    args: SAPRequest,
+    api_key: APIKeyDep,
+):
+    """Run the SAP (attack-prompt) generate→attack→evaluate loop."""
+    logger.info(
+        "SAP run: rounds=%s candidates=%s threshold=%s",
+        args.rounds,
+        args.candidates_per_round,
+        args.success_threshold,
+    )
+    try:
+        return sap_service(args)
+    except Exception as e:
+        logger.error(f"SAP run failed: {e}")
+        raise HTTPException(status_code=500, detail=f"SAP failed: {str(e)}") from e
 
 
 @app.post(

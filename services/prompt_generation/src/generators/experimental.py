@@ -18,10 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 EXPERIMENTAL_METHODS: dict[str, dict[str, str]] = {
-    "sap": {
-        "path": "experimental/single/attack-prompt/main.py",
-        "description": "SAP: attack-prompt generate→attack→evaluate loop",
-    },
     "stp": {
         "path": "experimental/single/scalable-and-transferable/main.py",
         "description": "STP: structured jailbreak artifacts (instruction/persona/modulation)",
@@ -88,10 +84,6 @@ class ExperimentalPromptGenerator(BaseGenerator):
             f"Run the prototype at {path_hint} and wrap its outputs into "
             "GeneratedPrompt/PromptArtifact to enable this generator."
         )
-
-
-class SAPPromptGenerator(ExperimentalPromptGenerator):
-    method_id = "sap"
 
 
 class DSNPromptGenerator(ExperimentalPromptGenerator):
