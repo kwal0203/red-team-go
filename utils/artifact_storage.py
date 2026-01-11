@@ -37,7 +37,9 @@ def _scrub_secrets(payload: Any) -> Any:
         redacted = {}
         for key, value in payload.items():
             lower_key = str(key).lower()
-            if any(token in lower_key for token in ("key", "token", "secret", "password")):
+            if any(
+                token in lower_key for token in ("key", "token", "secret", "password")
+            ):
                 redacted[key] = "***redacted***"
             else:
                 redacted[key] = _scrub_secrets(value)
@@ -62,7 +64,9 @@ def _to_serializable(payload: Any) -> Any:
     return payload
 
 
-def _build_key(prefix: str, evaluation_type: str, created_at: str, artifact_id: str) -> str:
+def _build_key(
+    prefix: str, evaluation_type: str, created_at: str, artifact_id: str
+) -> str:
     date_prefix = created_at.split("T", maxsplit=1)[0]
     safe_prefix = prefix.strip("/") if prefix else "redteamgo"
     safe_eval = evaluation_type.strip("/")

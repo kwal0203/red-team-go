@@ -73,6 +73,33 @@ export interface GPTFuzzerResponse {
   metadata: Record<string, unknown>;
 }
 
+export interface AARTRequest {
+  concepts?: string[];
+  num_prompts?: number;
+  formats?: string[];
+  regions?: string[];
+  backend?: string;
+  max_retries?: number;
+  requirements?: string[];
+  output_fields?: string[];
+}
+
+export interface AARTPrompt {
+  region: string;
+  why_prompt_tailored_for_region: string;
+  medium_keyword: string;
+  why_prompt_harmful: string;
+  why_prompt_about_medium: string;
+  prompt: string;
+}
+
+export interface AARTResponse {
+  method: string;
+  concepts: string[];
+  prompts: AARTPrompt[];
+  metadata: Record<string, unknown>;
+}
+
 export interface JailbreakHubRequest {
   prompts: string[];
   model_name?: string;
@@ -198,7 +225,18 @@ export interface PromptGenerationRequest {
   model: Model;
   /** Target category: 'jailbreak' | 'harmful' | 'bias' | 'toxicity' */
   target_category: string;
-  generation_method: 'llm' | 'genetic' | 'pair';
+  generation_method:
+    | 'llm'
+    | 'genetic'
+    | 'pair'
+    | 'advprompter'
+    | 'dsn'
+    | 'autodan'
+    | 'cold'
+    | 'crt'
+    | 'blackbox_pair'
+    | 'stp'
+    | 'aart';
   num_prompts?: number;
   seed_prompts?: string[];
 }

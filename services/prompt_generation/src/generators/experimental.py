@@ -22,10 +22,6 @@ EXPERIMENTAL_METHODS: dict[str, dict[str, str]] = {
         "path": "experimental/single/attack-prompt/main.py",
         "description": "SAP: attack-prompt generate→attack→evaluate loop",
     },
-    "aart": {
-        "path": "experimental/single/aart/main.py",
-        "description": "AART: region/task CoT dataset generation",
-    },
     "stp": {
         "path": "experimental/single/scalable-and-transferable/main.py",
         "description": "STP: structured jailbreak artifacts (instruction/persona/modulation)",
@@ -96,10 +92,6 @@ class ExperimentalPromptGenerator(BaseGenerator):
 
 class SAPPromptGenerator(ExperimentalPromptGenerator):
     method_id = "sap"
-
-
-class AARTPromptGenerator(ExperimentalPromptGenerator):
-    method_id = "aart"
 
 
 class DSNPromptGenerator(ExperimentalPromptGenerator):
