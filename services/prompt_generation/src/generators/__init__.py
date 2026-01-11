@@ -5,6 +5,7 @@ from services.prompt_generation.src.generators.base import (
     GeneratedPrompt,
     PromptEvaluation,
 )
+from services.prompt_generation.src.generators.dsn_adapter import DSNPromptGenerator
 from services.prompt_generation.src.generators.experimental import (
     AARTPromptGenerator,
     AdvPrompterGenerator,
@@ -13,7 +14,6 @@ from services.prompt_generation.src.generators.experimental import (
     ColdAttackPromptGenerator,
     CRTPromptGenerator,
     DatasetPromptGenerator,
-    DSNPromptGenerator,
     ExperimentalPromptGenerator,
     GPTFuzzerPromptGenerator,
     JailbreakHubGenerator,
@@ -34,7 +34,6 @@ __all__ = [
     "SAPPromptGenerator",
     "AARTPromptGenerator",
     "STPPromptGenerator",
-    "DSNPromptGenerator",
     "ManyShotPromptGenerator",
     "AdvPrompterGenerator",
     "AutoDANPromptGenerator",
@@ -48,4 +47,5 @@ __all__ = [
     "GeneticPromptGenerator",
     "PAIRPromptGenerator",
     "run_stp_once",
+    "DSNPromptGenerator",
 ]
