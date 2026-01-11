@@ -89,6 +89,8 @@ Core endpoints:
 - `POST /refusal-consistency`
 - `POST /privacy-redteam`
 - `POST /hallucination-confidence`
+- `POST /gptfuzzer`
+- `POST /jailbreakhub-analytics`
 - `GET /datasets`
 - `GET /datasets/{name}`
 - `GET /health`
