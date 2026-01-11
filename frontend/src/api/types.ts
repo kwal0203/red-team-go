@@ -100,6 +100,42 @@ export interface AARTResponse {
   metadata: Record<string, unknown>;
 }
 
+// SAP (attack-prompt)
+export interface SAPSeedExample {
+  prompt: string;
+  explanation: string;
+}
+
+export interface SAPRequest {
+  rounds?: number;
+  candidates_per_round?: number;
+  success_threshold?: number;
+  max_retries?: number;
+  attacker_backend?: string;
+  target_backend?: string;
+  evaluator_backend?: string;
+  seeds?: SAPSeedExample[];
+  requirements?: string[];
+  output_fields?: string[];
+}
+
+export interface SAPResult {
+  round: number;
+  candidate: number;
+  prompt: string;
+  explanation: string;
+  target_response: string;
+  harmfulness_score: number;
+  success: boolean;
+  duration_s: number;
+}
+
+export interface SAPResponse {
+  method: string;
+  results: SAPResult[];
+  metadata: Record<string, unknown>;
+}
+
 export interface JailbreakHubRequest {
   prompts: string[];
   model_name?: string;
@@ -236,7 +272,8 @@ export interface PromptGenerationRequest {
     | 'crt'
     | 'blackbox_pair'
     | 'stp'
-    | 'aart';
+    | 'aart'
+    | 'sap';
   num_prompts?: number;
   seed_prompts?: string[];
 }

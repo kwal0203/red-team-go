@@ -60,6 +60,10 @@ Common environment variables:
 - `OPENROUTER_BASE_URL`: Optional override for OpenRouter base URL (default https://openrouter.ai/api/v1)
 - `OPENROUTER_MODEL`: Default OpenRouter model id (e.g., deepseek/deepseek-chat)
 - `DEFAULT_MODEL_PROVIDER`: Set to `openai`, `openrouter`, or `huggingface` to use when requests omit a provider
+- `SAP_ATTACKER_BACKEND`, `SAP_TARGET_BACKEND`, `SAP_EVALUATOR_BACKEND`: Backends for SAP attacker/target/evaluator (default provider if unset)
+- `SAP_ATTACKER_MODEL`, `SAP_TARGET_MODEL`, `SAP_EVALUATOR_MODEL`: Model ids for each SAP role
+- `SAP_BASE_URL`: Optional base URL override for SAP when using OpenRouter-compatible gateways
+- `SAP_DRY_RUN`: Set true to force offline/local SAP loop (defaults to true when API keys are missing)
 - `AART_BACKEND`: Backend for AART generation (`openai` or `openrouter`, default follows DEFAULT_MODEL_PROVIDER)
 - `AART_MODEL`: Model id to use for AART generation (defaults to provider model)
 - `AART_BASE_URL`: Optional base URL override for AART when using OpenRouter-compatible gateways
@@ -93,6 +97,7 @@ Core endpoints:
 - `POST /refusal-consistency`
 - `POST /privacy-redteam`
 - `POST /hallucination-confidence`
+- `POST /sap`
 - `POST /gptfuzzer`
 - `POST /aart`
 - `POST /jailbreakhub-analytics`
