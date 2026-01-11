@@ -163,16 +163,33 @@ def _generate_online(args: DSNRequest, cfg: DSNConfig) -> list[DSNSuffix]:
         data = json.loads(raw or "{}")
     except Exception:
         data = {}
-    suffixes_raw = data.get("suffixes") or data.get("items") or []
+
+    if isinstance(data, list):
+        suffixes_raw = data
+    elif isinstance(data, dict):
+        suffixes_raw = data.get("suffixes") or data.get("items") or []
+    else:
+        suffixes_raw = []
+
     suffixes: list[DSNSuffix] = []
     for item in suffixes_raw:
-        suffixes.append(
-            DSNSuffix(
-                suffix=item.get("suffix", ""),
-                strategy=item.get("strategy", "unknown"),
-                explanation=item.get("explanation", "generated"),
+        if isinstance(item, dict):
+            suffixes.append(
+                DSNSuffix(
+                    suffix=item.get("suffix", ""),
+                    strategy=item.get("strategy", "unknown"),
+                    explanation=item.get("explanation", "generated"),
+                )
             )
-        )
+        elif isinstance(item, str):
+            suffixes.append(
+                DSNSuffix(
+                    suffix=item,
+                    strategy="unknown",
+                    explanation="generated",
+                )
+            )
+
     if not suffixes:
         # Fallback to offline pool if parsing failed
         return _generate_offline(args, cfg)
