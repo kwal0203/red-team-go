@@ -24,6 +24,7 @@ from services.prompt_generation.src.generators.experimental import (
 from services.prompt_generation.src.generators.genetic import GeneticPromptGenerator
 from services.prompt_generation.src.generators.llm_generator import LLMPromptGenerator
 from services.prompt_generation.src.generators.pair import PAIRPromptGenerator
+from services.prompt_generation.src.generators.stp_adapter import run_stp_once
 
 __all__ = [
     "BaseGenerator",
@@ -46,4 +47,5 @@ __all__ = [
     "LLMPromptGenerator",
     "GeneticPromptGenerator",
     "PAIRPromptGenerator",
+    "run_stp_once",
 ]

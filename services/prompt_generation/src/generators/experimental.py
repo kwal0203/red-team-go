@@ -102,10 +102,6 @@ class AARTPromptGenerator(ExperimentalPromptGenerator):
     method_id = "aart"
 
 
-class STPPromptGenerator(ExperimentalPromptGenerator):
-    method_id = "stp"
-
-
 class DSNPromptGenerator(ExperimentalPromptGenerator):
     method_id = "dsn"
 
@@ -144,3 +140,26 @@ class BlackBoxPAIRPromptGenerator(ExperimentalPromptGenerator):
 
 class DatasetPromptGenerator(ExperimentalPromptGenerator):
     method_id = "datasets"
+
+
+class STPPromptGenerator(ExperimentalPromptGenerator):
+    method_id = "stp"
+
+    def generate(
+        self,
+        category: str,
+        num_prompts: int = 1,
+        seed_prompt: str | None = None,
+    ):
+        """Call the STP prototype to synthesize structured artifacts."""
+        from services.prompt_generation.src.generators.stp_adapter import (
+            run_stp_once,
+        )
+
+        artifacts = run_stp_once(category=category, seed_prompt=seed_prompt)
+        results = []
+        for _idx, artifact in enumerate(artifacts[:num_prompts]):
+            results.append(artifact)
+            if len(results) >= num_prompts:
+                break
+        return results
