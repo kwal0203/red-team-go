@@ -23,6 +23,8 @@ from services.datasets import (
     get_dataset_info,
     list_datasets,
 )
+from services.dsn.api import DSNRequest, DSNResponse
+from services.dsn.service import dsn_service
 from services.gptfuzzer.api import GPTFuzzerRequest, GPTFuzzerResponse
 from services.gptfuzzer.service import gptfuzzer_service
 from services.guardrails.service import (
@@ -1366,6 +1368,34 @@ def get_dataset_samples(
 # =============================================================================
 # Adversarial Search Endpoints
 # =============================================================================
+
+
+@app.post(
+    "/dsn",
+    response_model=DSNResponse,
+    tags=["Adversarial Search"],
+    responses={
+        **COMMON_RESPONSES,
+        200: {"description": "DSN suffix generation successful"},
+    },
+)
+@limiter.limit(RATE_LIMIT_BATCH)
+def run_dsn(
+    request: Request,
+    args: DSNRequest,
+    api_key: APIKeyDep,
+):
+    """Generate refusal-suppression suffixes using DSN."""
+    logger.info(
+        "DSN run: num_suffixes=%s backend=%s",
+        args.num_suffixes,
+        args.backend or os.getenv("DSN_BACKEND", "auto"),
+    )
+    try:
+        return dsn_service(args)
+    except Exception as e:
+        logger.error(f"DSN run failed: {e}")
+        raise HTTPException(status_code=500, detail=f"DSN failed: {str(e)}") from e
 
 
 @app.post(

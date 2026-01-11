@@ -22,10 +22,6 @@ EXPERIMENTAL_METHODS: dict[str, dict[str, str]] = {
         "path": "experimental/single/scalable-and-transferable/main.py",
         "description": "STP: structured jailbreak artifacts (instruction/persona/modulation)",
     },
-    "dsn": {
-        "path": "experimental/single/dont-say-no/main.py",
-        "description": "DSN: gradient-based refusal suppression suffix",
-    },
     "manyshot": {
         "path": "experimental/single/many-shot-jailbreak/main.py",
         "description": "Many-shot: long ICL jailbreak transcript construction",
@@ -84,10 +80,6 @@ class ExperimentalPromptGenerator(BaseGenerator):
             f"Run the prototype at {path_hint} and wrap its outputs into "
             "GeneratedPrompt/PromptArtifact to enable this generator."
         )
-
-
-class DSNPromptGenerator(ExperimentalPromptGenerator):
-    method_id = "dsn"
 
 
 class ManyShotPromptGenerator(ExperimentalPromptGenerator):
