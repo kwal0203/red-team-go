@@ -12,7 +12,7 @@ from services.prompt_generation.src.evaluator import (
 )
 from services.prompt_generation.src.generators import (
     AARTPromptGenerator,
-    AdvPrompterGenerator,
+    AdvPrompterPromptGenerator,
     AutoDANPromptGenerator,
     BlackBoxPAIRPromptGenerator,
     ColdAttackPromptGenerator,
@@ -43,7 +43,7 @@ GENERATOR_REGISTRY = {
     "stp": STPPromptGenerator,
     "dsn": DSNPromptGenerator,
     "manyshot": ManyShotPromptGenerator,
-    "advprompter": AdvPrompterGenerator,
+    "advprompter": AdvPrompterPromptGenerator,
     "autodan": AutoDANPromptGenerator,
     "cold": ColdAttackPromptGenerator,
     "crt": CRTPromptGenerator,

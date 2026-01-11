@@ -1,5 +1,8 @@
 """Prompt generators for adversarial testing."""
 
+from services.prompt_generation.src.generators.advprompter_adapter import (
+    AdvPrompterPromptGenerator,
+)
 from services.prompt_generation.src.generators.base import (
     BaseGenerator,
     GeneratedPrompt,
@@ -8,7 +11,6 @@ from services.prompt_generation.src.generators.base import (
 from services.prompt_generation.src.generators.dsn_adapter import DSNPromptGenerator
 from services.prompt_generation.src.generators.experimental import (
     AARTPromptGenerator,
-    AdvPrompterGenerator,
     AutoDANPromptGenerator,
     BlackBoxPAIRPromptGenerator,
     ColdAttackPromptGenerator,
@@ -34,6 +36,7 @@ __all__ = [
     "SAPPromptGenerator",
     "AARTPromptGenerator",
     "STPPromptGenerator",
+    "AdvPrompterPromptGenerator",
     "ManyShotPromptGenerator",
     "AdvPrompterGenerator",
     "AutoDANPromptGenerator",
