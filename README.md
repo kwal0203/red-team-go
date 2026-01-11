@@ -64,6 +64,9 @@ Common environment variables:
 - `DSN_MODEL`: Model id to use for DSN generation
 - `DSN_BASE_URL`: Optional base URL override for DSN when using OpenRouter-compatible gateways
 - `DSN_DRY_RUN`: Set true to force offline/local DSN suffix generation (defaults to true when API key missing)
+- `DSN_WHITEBOX`: Set true (or backend `whitebox`) to run gradient-style DSN with a local model (default distilgpt2)
+- `DSN_WHITEBOX_MODEL`: Local model name for whitebox DSN (default distilgpt2)
+- `DSN_SUFFIX_TOKENS`, `DSN_MAX_STEPS`, `DSN_MAX_EXAMPLES`, `DSN_DATA_PATH`: Tune whitebox suffix length, optimization steps, dataset size, and dataset path
 - `SAP_ATTACKER_BACKEND`, `SAP_TARGET_BACKEND`, `SAP_EVALUATOR_BACKEND`: Backends for SAP attacker/target/evaluator (default provider if unset)
 - `SAP_ATTACKER_MODEL`, `SAP_TARGET_MODEL`, `SAP_EVALUATOR_MODEL`: Model ids for each SAP role
 - `SAP_BASE_URL`: Optional base URL override for SAP when using OpenRouter-compatible gateways

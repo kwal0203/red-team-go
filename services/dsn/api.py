@@ -17,7 +17,7 @@ class DSNRequest(BaseModel):
     )
     backend: str | None = Field(
         None,
-        description="Backend to use (openai|openrouter); defaults to env configuration",
+        description="Backend to use (openai|openrouter|whitebox); defaults to env configuration",
     )
     strategies: list[str] | None = Field(
         None,
