@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import random
+import re
 import time
 import uuid
 from dataclasses import dataclass
@@ -60,6 +61,7 @@ class DSNConfig:
     api_key: str | None
     dry_run: bool
     whitebox: bool
+    restarts: int
     strategies: list[str]
     requirements: list[str]
     output_fields: list[str]
@@ -76,6 +78,7 @@ class DSNConfig:
             "base_url": self.base_url,
             "dry_run": self.dry_run,
             "whitebox": self.whitebox,
+            "restarts": self.restarts,
             "strategies_requested": self.strategies,
             "requirements_requested": self.requirements,
             "output_fields_requested": self.output_fields,
@@ -118,10 +121,11 @@ def _load_config(args: DSNRequest) -> DSNConfig:
         api_key=api_key,
         dry_run=dry_run,
         whitebox=whitebox,
+        restarts=int(os.getenv("DSN_RESTARTS", "2")),
         strategies=args.strategies or DEFAULT_STRATEGIES,
         requirements=args.requirements or [],
         output_fields=args.output_fields or [],
-        model_name_whitebox=os.getenv("DSN_WHITEBOX_MODEL", "distilgpt2"),
+        model_name_whitebox=os.getenv("DSN_WHITEBOX_MODEL", "gpt2"),
         suffix_tokens=int(
             os.getenv("DSN_SUFFIX_TOKENS", str(min(args.max_tokens, 20)))
         ),
@@ -355,38 +359,70 @@ def _run_whitebox(args: DSNRequest, cfg: DSNConfig) -> list[DSNSuffix]:
     vocab_size = tokenizer.vocab_size
     suffix_len = min(cfg.suffix_tokens, args.max_tokens)
 
-    best_suffix = _initialize_suffix_ids(suffix_len, vocab_size, seed=7)
-    best_loss = _compute_dsn_loss(
-        model, tokenizer, best_suffix, examples, refusal_ids, device=device
-    )
+    best_global: list[DSNSuffix] = []
 
-    for step in range(1, cfg.max_steps + 1):
-        candidate = _mutate_suffix(best_suffix, vocab_size, rng)
-        loss = _compute_dsn_loss(
-            model, tokenizer, candidate, examples, refusal_ids, device=device
+    for restart in range(cfg.restarts):
+        best_suffix = _initialize_suffix_ids(suffix_len, vocab_size, seed=7 + restart)
+        best_loss = _compute_dsn_loss(
+            model, tokenizer, best_suffix, examples, refusal_ids, device=device
         )
-        if loss < best_loss:
-            best_loss = loss
-            best_suffix = candidate
-        if step % 10 == 0 or step == cfg.max_steps:
-            logger.info(
-                "DSN whitebox step %s/%s | best_loss=%.4f current_loss=%.4f",
-                step,
-                cfg.max_steps,
-                best_loss,
-                loss,
-            )
 
-    decoded = tokenizer.decode(best_suffix, clean_up_tokenization_spaces=True)
-    suffixes: list[DSNSuffix] = []
-    for _idx in range(args.num_suffixes):
-        suffixes.append(
+        for step in range(1, cfg.max_steps + 1):
+            candidate = _mutate_suffix(best_suffix, vocab_size, rng)
+            loss = _compute_dsn_loss(
+                model, tokenizer, candidate, examples, refusal_ids, device=device
+            )
+            if loss < best_loss:
+                best_loss = loss
+                best_suffix = candidate
+            if step % 10 == 0 or step == cfg.max_steps:
+                logger.info(
+                    "DSN whitebox restart %s/%s step %s/%s | best_loss=%.4f current_loss=%.4f",
+                    restart + 1,
+                    cfg.restarts,
+                    step,
+                    cfg.max_steps,
+                    best_loss,
+                    loss,
+                )
+
+        decoded = tokenizer.decode(
+            best_suffix,
+            clean_up_tokenization_spaces=True,
+            skip_special_tokens=True,
+        )
+        cleaned = re.sub(r"[^a-zA-Z0-9 ,.';:?!/\\-]+", " ", decoded)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        if not cleaned:
+            cleaned = decoded.strip()
+        best_global.append(
             DSNSuffix(
-                suffix=f"### {decoded}".strip(),
+                suffix=f"### {cleaned}".strip(),
                 strategy="whitebox_hotflip",
-                explanation=f"Optimized on {len(examples)} examples, loss={best_loss:.4f}",
+                explanation=(
+                    f"Restart {restart+1}/{cfg.restarts}, "
+                    f"examples={len(examples)}, loss={best_loss:.4f}"
+                ),
             )
         )
+
+    # Keep unique suffixes and trim to requested count
+    unique_suffixes: list[DSNSuffix] = []
+    seen = set()
+    for s in best_global:
+        key = s.suffix
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_suffixes.append(s)
+        if len(unique_suffixes) >= args.num_suffixes:
+            break
+
+    # If not enough unique, repeat the best we have
+    while len(unique_suffixes) < args.num_suffixes and unique_suffixes:
+        unique_suffixes.append(unique_suffixes[-1])
+
+    suffixes = unique_suffixes or best_global
     return suffixes
 
 
