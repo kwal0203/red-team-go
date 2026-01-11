@@ -360,7 +360,7 @@ def _run_whitebox(args: DSNRequest, cfg: DSNConfig) -> list[DSNSuffix]:
         model, tokenizer, best_suffix, examples, refusal_ids, device=device
     )
 
-    for _ in range(cfg.max_steps):
+    for step in range(1, cfg.max_steps + 1):
         candidate = _mutate_suffix(best_suffix, vocab_size, rng)
         loss = _compute_dsn_loss(
             model, tokenizer, candidate, examples, refusal_ids, device=device
@@ -368,6 +368,14 @@ def _run_whitebox(args: DSNRequest, cfg: DSNConfig) -> list[DSNSuffix]:
         if loss < best_loss:
             best_loss = loss
             best_suffix = candidate
+        if step % 10 == 0 or step == cfg.max_steps:
+            logger.info(
+                "DSN whitebox step %s/%s | best_loss=%.4f current_loss=%.4f",
+                step,
+                cfg.max_steps,
+                best_loss,
+                loss,
+            )
 
     decoded = tokenizer.decode(best_suffix, clean_up_tokenization_spaces=True)
     suffixes: list[DSNSuffix] = []
