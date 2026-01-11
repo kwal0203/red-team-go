@@ -17,6 +17,9 @@ class GeneratedPrompt:
     prompt: str
     generation_method: str
     metadata: dict = field(default_factory=dict)
+    artifact: "PromptArtifact | None" = None
+    metrics: "GenerationMetrics | None" = None
+    run_metadata: "RunMetadata | None" = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -24,6 +27,9 @@ class GeneratedPrompt:
             "prompt": self.prompt,
             "generation_method": self.generation_method,
             "metadata": self.metadata,
+            "artifact": self.artifact.to_dict() if self.artifact else None,
+            "metrics": self.metrics.to_dict() if self.metrics else None,
+            "run_metadata": self.run_metadata.to_dict() if self.run_metadata else None,
         }
 
 
@@ -50,6 +56,85 @@ class PromptEvaluation:
             "model_response": self.model_response,
             "bypass_successful": self.bypass_successful,
             "guardrail_results": self.guardrail_results,
+        }
+
+
+@dataclass
+class PromptExample:
+    """A single in-context learning example."""
+
+    user: str
+    assistant: str
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {"user": self.user, "assistant": self.assistant}
+
+
+@dataclass
+class PromptArtifact:
+    """Structured jailbreak artifact components."""
+
+    system: str | None = None
+    instruction: str | None = None
+    persona: str | None = None
+    suffix: str | None = None
+    icl_examples: list[PromptExample] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            "system": self.system,
+            "instruction": self.instruction,
+            "persona": self.persona,
+            "suffix": self.suffix,
+            "icl_examples": [ex.to_dict() for ex in self.icl_examples],
+        }
+
+
+@dataclass
+class GenerationMetrics:
+    """Evaluation metrics returned by iterative/optimized generators."""
+
+    asr: float | None = None
+    judge_score: float | None = None
+    refusal_rate: float | None = None
+    novelty: float | None = None
+    cost: float | None = None
+    tokens: int | None = None
+    latency_ms: float | None = None
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            "asr": self.asr,
+            "judge_score": self.judge_score,
+            "refusal_rate": self.refusal_rate,
+            "novelty": self.novelty,
+            "cost": self.cost,
+            "tokens": self.tokens,
+            "latency_ms": self.latency_ms,
+        }
+
+
+@dataclass
+class RunMetadata:
+    """Metadata describing how/where a generator executed."""
+
+    method: str
+    backend: str | None = None
+    run_id: str | None = None
+    logs_path: str | None = None
+    config: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            "method": self.method,
+            "backend": self.backend,
+            "run_id": self.run_id,
+            "logs_path": self.logs_path,
+            "config": self.config,
         }
 
 

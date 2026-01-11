@@ -5,6 +5,22 @@ from services.prompt_generation.src.generators.base import (
     GeneratedPrompt,
     PromptEvaluation,
 )
+from services.prompt_generation.src.generators.experimental import (
+    AARTPromptGenerator,
+    AdvPrompterGenerator,
+    AutoDANPromptGenerator,
+    BlackBoxPAIRPromptGenerator,
+    ColdAttackPromptGenerator,
+    CRTPromptGenerator,
+    DatasetPromptGenerator,
+    DSNPromptGenerator,
+    ExperimentalPromptGenerator,
+    GPTFuzzerPromptGenerator,
+    JailbreakHubGenerator,
+    ManyShotPromptGenerator,
+    SAPPromptGenerator,
+    STPPromptGenerator,
+)
 from services.prompt_generation.src.generators.genetic import GeneticPromptGenerator
 from services.prompt_generation.src.generators.llm_generator import LLMPromptGenerator
 from services.prompt_generation.src.generators.pair import PAIRPromptGenerator
@@ -13,6 +29,20 @@ __all__ = [
     "BaseGenerator",
     "GeneratedPrompt",
     "PromptEvaluation",
+    "ExperimentalPromptGenerator",
+    "SAPPromptGenerator",
+    "AARTPromptGenerator",
+    "STPPromptGenerator",
+    "DSNPromptGenerator",
+    "ManyShotPromptGenerator",
+    "AdvPrompterGenerator",
+    "AutoDANPromptGenerator",
+    "ColdAttackPromptGenerator",
+    "CRTPromptGenerator",
+    "GPTFuzzerPromptGenerator",
+    "JailbreakHubGenerator",
+    "BlackBoxPAIRPromptGenerator",
+    "DatasetPromptGenerator",
     "LLMPromptGenerator",
     "GeneticPromptGenerator",
     "PAIRPromptGenerator",
