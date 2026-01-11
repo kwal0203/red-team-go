@@ -51,6 +51,47 @@ export interface ErrorResponse {
 }
 
 // ============================================================================
+// Adversarial Search & Analytics
+// ============================================================================
+
+export interface GPTFuzzerRequest {
+  prompt: string;
+  num_variants?: number;
+  max_iterations?: number;
+}
+
+export interface GPTFuzzerVariant {
+  variant: string;
+  score: number;
+  lineage: string[];
+}
+
+export interface GPTFuzzerResponse {
+  method: string;
+  prompt: string;
+  variants: GPTFuzzerVariant[];
+  metadata: Record<string, unknown>;
+}
+
+export interface JailbreakHubRequest {
+  prompts: string[];
+  model_name?: string;
+  max_samples?: number;
+}
+
+export interface JailbreakHubCluster {
+  cluster_id: number;
+  members: string[];
+}
+
+export interface JailbreakHubResponse {
+  method: string;
+  total_prompts: number;
+  clusters: JailbreakHubCluster[];
+  metadata: Record<string, unknown>;
+}
+
+// ============================================================================
 // Detection Endpoints
 // ============================================================================
 
