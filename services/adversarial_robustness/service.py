@@ -10,29 +10,10 @@ from services.adversarial_robustness.src.evaluator import (
     AdversarialEvaluator,
     RobustnessReport,
 )
-from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
-from services.model_wrappers.model_openai import APIModelOpenai
+from utils.model_factory import create_target_model
 from utils.models import Model
 
 logger = logging.getLogger(__name__)
-
-
-def _create_target_model(model: Model):
-    """Create the appropriate model wrapper based on model configuration."""
-    if "openai" in model["name"]:
-        logger.info(f"Creating OpenAI model wrapper for {model['name']}")
-        return APIModelOpenai(name=model["name"], description=model["description"])
-    elif "huggingface" in model["name"]:
-        logger.info(f"Creating HuggingFace model wrapper for {model['name']}")
-        return APIModelHuggingFace(
-            base_url=model["base_url"],
-            name=model["name"],
-            description=model["description"],
-        )
-    else:
-        raise ValueError(
-            f"Invalid model name '{model['name']}': must contain 'openai' or 'huggingface'"
-        )
 
 
 def adversarial_robustness_service(
@@ -65,7 +46,7 @@ def adversarial_robustness_service(
     logger.info(f"Starting adversarial robustness test for model: {model['name']}")
 
     # Create target model
-    target_model = _create_target_model(model)
+    target_model = create_target_model(model)
 
     # Create evaluator
     evaluator = AdversarialEvaluator(
