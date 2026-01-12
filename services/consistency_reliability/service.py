@@ -10,49 +10,10 @@ from services.consistency_reliability.src.evaluator import (
     ConsistencyReliabilityEvaluator,
     EvaluationReport,
 )
-from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
-from services.model_wrappers.model_openai import APIModelOpenai
+from utils.model_factory import create_target_model
 from utils.models import Model
 
 logger = logging.getLogger(__name__)
-
-
-def _create_target_model(model: Model | dict):
-    """Create the appropriate model wrapper based on model configuration.
-
-    Args:
-        model: Model configuration (Pydantic model or dict).
-
-    Returns:
-        Model wrapper instance.
-
-    Raises:
-        ValueError: If model name is invalid.
-    """
-    # Handle both Pydantic model and dict
-    if hasattr(model, "name"):
-        model_name = model.name
-        model_desc = model.description
-        model_url = getattr(model, "base_url", None)
-    else:
-        model_name = model["name"]
-        model_desc = model["description"]
-        model_url = model.get("base_url")
-
-    if "openai" in model_name:
-        logger.info(f"Creating OpenAI model wrapper for {model_name}")
-        return APIModelOpenai(name=model_name, description=model_desc)
-    elif "huggingface" in model_name:
-        logger.info(f"Creating HuggingFace model wrapper for {model_name}")
-        return APIModelHuggingFace(
-            base_url=model_url,
-            name=model_name,
-            description=model_desc,
-        )
-    else:
-        raise ValueError(
-            f"Invalid model name '{model_name}': must contain 'openai' or 'huggingface'"
-        )
 
 
 def consistency_reliability_service(
@@ -90,7 +51,7 @@ def consistency_reliability_service(
     logger.info(f"Starting consistency/reliability test for model: {model_name}")
 
     # Create target model
-    target_model = _create_target_model(model)
+    target_model = create_target_model(model)
 
     # Create evaluator with all config options
     evaluator = ConsistencyReliabilityEvaluator(
