@@ -49,7 +49,15 @@ class LLMJudge:
             model: OpenAI model to use for judging.
         """
         self.model = model
-        self.client = openai.OpenAI(api_key=get_openai_key())
+        api_key = get_openai_key()
+        if not api_key:
+            # Allow unit tests to construct the judge without real credentials.
+            logger.warning(
+                "OPENAI_API_KEY not set; using placeholder key for LLMJudge initialization"
+            )
+            api_key = "test-key"
+
+        self.client = openai.OpenAI(api_key=api_key)
         logger.info(f"LLMJudge initialized with model: {model}")
 
     def is_refusal(self, prompt: str, response: str) -> tuple[bool, str]:

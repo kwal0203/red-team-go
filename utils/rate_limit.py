@@ -27,7 +27,7 @@ def get_api_key_or_ip(request: Request) -> str:
     if api_key:
         # Use first 8 chars of API key for privacy in logs
         return f"key:{api_key[:8]}..."
-    return get_remote_address(request)
+    return str(get_remote_address(request))
 
 
 # Create the limiter with in-memory storage

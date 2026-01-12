@@ -62,7 +62,7 @@ def generate_report(
 
     # Dumping results to .json file which can be read by the React frontend
     # TODO: need to connect back and front end by websockets or something
-    result_json = {}
+    result_json: dict[str, Any] = {}
     # result_json["summary"] = generated_summary
     # result_json["overall_score"] = overall_score
     # result_json["factscore"] = factscore

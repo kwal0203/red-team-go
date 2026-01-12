@@ -1,0 +1,16 @@
+{
+  "include": ["utils"],
+  "exclude": [
+    "**/__pycache__",
+    ".venv",
+    "experimental",
+    "frontend",
+    "services",
+    "tests",
+    "main.py"
+  ],
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic",
+  "venvPath": ".",
+  "venv": ".venv"
+}
