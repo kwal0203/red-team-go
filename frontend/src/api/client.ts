@@ -2,7 +2,7 @@ import axios from 'axios';
 import { STORAGE_KEY_API_KEY } from './constants';
 
 // API base URL - uses environment variable or defaults to localhost
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 // Check if we're in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -13,6 +13,8 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Prevent the UI from spinning forever if the backend call hangs
+  timeout: 30000, // 30s
 });
 
 // Add API key to requests if available
