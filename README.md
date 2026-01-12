@@ -60,6 +60,14 @@ Common environment variables:
 - `OPENROUTER_BASE_URL`: Optional override for OpenRouter base URL (default https://openrouter.ai/api/v1)
 - `OPENROUTER_MODEL`: Default OpenRouter model id (e.g., deepseek/deepseek-chat)
 - `DEFAULT_MODEL_PROVIDER`: Set to `openai`, `openrouter`, or `huggingface` to use when requests omit a provider
+- `DSN_BACKEND`: Backend for DSN suffix generation (`openai` or `openrouter`, default follows DEFAULT_MODEL_PROVIDER)
+- `DSN_MODEL`: Model id to use for DSN generation
+- `DSN_BASE_URL`: Optional base URL override for DSN when using OpenRouter-compatible gateways
+- `DSN_DRY_RUN`: Set true to force offline/local DSN suffix generation (defaults to true when API key missing)
+- `DSN_WHITEBOX`: Set true (or backend `whitebox`) to run gradient-style DSN with a local model (default distilgpt2)
+- `DSN_WHITEBOX_MODEL`: Local model name for whitebox DSN (default distilgpt2)
+- `DSN_SUFFIX_TOKENS`, `DSN_MAX_STEPS`, `DSN_MAX_EXAMPLES`, `DSN_DATA_PATH`: Tune whitebox suffix length, optimization steps, dataset size, and dataset path
+- `DSN_RESTARTS`: Restarts for whitebox optimization (default 2)
 - `SAP_ATTACKER_BACKEND`, `SAP_TARGET_BACKEND`, `SAP_EVALUATOR_BACKEND`: Backends for SAP attacker/target/evaluator (default provider if unset)
 - `SAP_ATTACKER_MODEL`, `SAP_TARGET_MODEL`, `SAP_EVALUATOR_MODEL`: Model ids for each SAP role
 - `SAP_BASE_URL`: Optional base URL override for SAP when using OpenRouter-compatible gateways
@@ -97,6 +105,7 @@ Core endpoints:
 - `POST /refusal-consistency`
 - `POST /privacy-redteam`
 - `POST /hallucination-confidence`
+- `POST /dsn`
 - `POST /sap`
 - `POST /gptfuzzer`
 - `POST /aart`

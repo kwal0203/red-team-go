@@ -136,6 +136,30 @@ export interface SAPResponse {
   metadata: Record<string, unknown>;
 }
 
+// DSN (Don't-Say-No)
+export interface DSNRequest {
+  seed_prompt?: string;
+  num_suffixes?: number;
+  max_tokens?: number;
+  backend?: string;
+  strategies?: string[];
+  requirements?: string[];
+  output_fields?: string[];
+}
+
+export interface DSNSuffix {
+  suffix: string;
+  strategy: string;
+  explanation: string;
+}
+
+export interface DSNResponse {
+  method: string;
+  seed_prompt?: string;
+  suffixes: DSNSuffix[];
+  metadata: Record<string, unknown>;
+}
+
 export interface JailbreakHubRequest {
   prompts: string[];
   model_name?: string;
