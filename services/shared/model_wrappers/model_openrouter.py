@@ -1,3 +1,5 @@
+import os
+
 import openai
 
 from services.shared.model_wrappers.base_model_remote import APIModel
@@ -21,11 +23,19 @@ class APIModelOpenRouter(APIModel):
         model_name: str | None = None,
     ) -> None:
         super().__init__(name=name, description=description)
-        openai.api_key = get_openrouter_key()
+        api_key = get_openrouter_key()
         # Ensure trailing slash so paths are correct (e.g., .../v1/chat/completions)
         base_url = get_openrouter_base_url().rstrip("/") + "/"
-        openai.base_url = base_url
-        self.client = openai
+        default_headers = {
+            # Recommended by OpenRouter to help with analytics; optional but harmless
+            "HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER", "http://localhost"),
+            "X-Title": os.getenv("OPENROUTER_APP_TITLE", "RedTeamGo"),
+        }
+        self.client = openai.OpenAI(
+            api_key=api_key,
+            base_url=base_url,
+            default_headers=default_headers,
+        )
         self.model_name = model_name or get_openrouter_model_name()
 
     def _model_predict(self, inputs: list[str]) -> list[str]:
