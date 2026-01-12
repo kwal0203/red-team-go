@@ -57,7 +57,7 @@ def _to_serializable(payload: Any) -> Any:
             return payload.to_dict()
         except Exception:
             pass
-    if is_dataclass(payload):
+    if is_dataclass(payload) and not isinstance(payload, type):
         return asdict(payload)
     if isinstance(payload, set):
         return list(payload)

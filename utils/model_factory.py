@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 def _normalize_model_config(model: ModelConfig | Mapping[str, Any]) -> dict[str, Any]:
     """Convert a Pydantic Model or plain mapping into a dict."""
     if isinstance(model, ModelConfig):
-        return model.model_dump()
+        return dict(model.model_dump())
     if isinstance(model, Mapping):
-        return dict(model)
+        return {str(key): value for key, value in model.items()}
     raise ValueError("Model configuration must be a mapping or utils.models.Model")
 
 
