@@ -1,0 +1,25 @@
+Plan to align services/dsn with dont-say-no experimental code (100% parity)
+
+1) Sync configuration surface
+   - Expand DSNConfig/DSNRequest to include experimental knobs: suffix_token_count, seed, position_candidates, max_steps, top_k, patience, alpha, train/eval paths, max_examples/eval_max_examples, model name. Load from env with same defaults as main.py and support .env loading.
+
+2) Match dataset handling
+   - Implement train/eval dataset loaders mirroring data/README: JSONL/JSON array with query/target, respecting caps and fallback examples. Distinguish train vs eval paths.
+
+3) Port gradient-based optimizer (GCG/HotFlip)
+   - Replace random mutation loop with the gradient-guided search from dont-say-no/main.py: attention-masked batching, component losses, top-k candidate selection on highest-gradient positions, multi-restart, patience-based early stop.
+
+4) Reproduce loss/objective components
+   - Implement compute_example_components with cosine-decayed affirmative loss + refusal unlikelihood; aggregate into compute_dsn_loss/evaluate_suffix equivalents. Track refusal probabilities and component metrics.
+
+5) Add evaluation and artifact outputs
+   - After training suffix, run held-out evaluation (or reuse train data if missing) and emit metrics. Save optimized suffix and metrics to results/ to mirror prototype, and include metrics in DSNResponse metadata.
+
+6) Align promptless/offline behaviors
+   - Ensure tokenizer pad-token setup matches prototype; propagate seed usage; align refusal keyword list. Keep offline LLM path unchanged but ensure consistency with new config defaults.
+
+7) Wire API/service responses
+   - Return optimized suffixes using the new optimizer; include config and metrics metadata. Preserve existing online/dry-run behavior while adding whitebox parity path.
+
+8) Testing/validation
+   - Smoke-test whitebox run with small steps to confirm suffix generation, metrics file creation, and response schema; verify env overrides and dataset reading.

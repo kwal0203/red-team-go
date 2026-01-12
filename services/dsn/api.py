@@ -31,6 +31,51 @@ class DSNRequest(BaseModel):
         None,
         description="Future schema fields to request (captured for metadata)",
     )
+    suffix_token_count: int | None = Field(
+        None,
+        ge=1,
+        le=200,
+        description="Override whitebox suffix token count (default mirrors experimental code)",
+    )
+    max_steps: int | None = Field(
+        None, ge=1, description="Override optimizer steps for whitebox mode"
+    )
+    top_k: int | None = Field(
+        None, ge=1, description="Override candidate token count for GCG search"
+    )
+    position_candidates: int | None = Field(
+        None, ge=1, description="Override number of gradient positions to explore"
+    )
+    patience: int | None = Field(
+        None, ge=1, description="Override patience before early stopping"
+    )
+    alpha: float | None = Field(
+        None, description="Override refusal unlikelihood weighting"
+    )
+    seed: int | None = Field(
+        None, description="Override RNG seed for whitebox suffix search"
+    )
+    train_path: str | None = Field(
+        None,
+        description="Optional training dataset path (JSONL or JSON array with query/target)",
+    )
+    eval_path: str | None = Field(
+        None,
+        description="Optional evaluation dataset path (JSONL or JSON array with query/target)",
+    )
+    max_examples: int | None = Field(
+        None, ge=1, description="Limit on training examples loaded"
+    )
+    eval_max_examples: int | None = Field(
+        None, ge=1, description="Limit on evaluation examples loaded"
+    )
+    model_name_whitebox: str | None = Field(
+        None,
+        description="Model to use for whitebox optimization (default distilgpt2)",
+    )
+    refusal_keywords: list[str] | None = Field(
+        None, description="Custom refusal keyword list for unlikelihood loss"
+    )
 
 
 class DSNSuffix(BaseModel):
