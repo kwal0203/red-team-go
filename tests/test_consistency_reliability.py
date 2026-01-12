@@ -4,21 +4,25 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.consistency_reliability.src.evaluator import (
+from services.evaluation.benchmarks.consistency_reliability.src.evaluator import (
     PASS_THRESHOLDS,
     TEST_REGISTRY,
     ConsistencyReliabilityEvaluator,
 )
-from services.consistency_reliability.src.tests.base import EvalSample
-from services.consistency_reliability.src.tests.instruction_following import (
+from services.evaluation.benchmarks.consistency_reliability.src.tests.base import (
+    EvalSample,
+)
+from services.evaluation.benchmarks.consistency_reliability.src.tests.instruction_following import (
     DEFAULT_CONSTRAINTS,
     InstructionFollowingTest,
 )
-from services.consistency_reliability.src.tests.self_consistency import (
+from services.evaluation.benchmarks.consistency_reliability.src.tests.self_consistency import (
     SelfConsistencyTest,
 )
-from services.consistency_reliability.src.tests.stability import StabilityTest
-from services.consistency_reliability.src.tests.sycophancy import (
+from services.evaluation.benchmarks.consistency_reliability.src.tests.stability import (
+    StabilityTest,
+)
+from services.evaluation.benchmarks.consistency_reliability.src.tests.sycophancy import (
     DEFAULT_TOPICS,
     SycophancyTest,
 )

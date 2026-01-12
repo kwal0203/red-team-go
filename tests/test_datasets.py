@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.datasets import (
+from services.shared.datasets import (
     BaseDatasetLoader,
     DatasetCategory,
     DatasetInfo,
@@ -14,7 +14,7 @@ from services.datasets import (
     get_dataset_info,
     list_datasets,
 )
-from services.datasets.src.stereotype import (
+from services.shared.datasets.src.stereotype import (
     BBQLoader,
     BiasType,
     CrowSPairsLoader,

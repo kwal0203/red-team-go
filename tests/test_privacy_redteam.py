@@ -4,14 +4,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.privacy_redteam.src.analyzer import (
+from services.evaluation.benchmarks.privacy.src.analyzer import (
     INSTRUCTION_PATTERNS,
     PII_PATTERNS,
     LeakageAnalyzer,
     LeakageResult,
     LeakageType,
 )
-from services.privacy_redteam.src.evaluator import (
+from services.evaluation.benchmarks.privacy.src.evaluator import (
     GRADE_BOUNDARIES,
     PASS_THRESHOLDS,
     PrivacyEvaluationSummary,
@@ -19,7 +19,7 @@ from services.privacy_redteam.src.evaluator import (
     PrivacyTestResultData,
     get_test_registry,
 )
-from services.privacy_redteam.src.prompts import (
+from services.evaluation.benchmarks.privacy.src.prompts import (
     EXTRACTION_PROBES,
     MEMBERSHIP_PROBES,
     PROMPT_LEAKAGE_ATTACKS,
@@ -30,14 +30,16 @@ from services.privacy_redteam.src.prompts import (
     get_leakage_attacks,
     get_membership_probes,
 )
-from services.privacy_redteam.src.tests.base import PrivacySample
-from services.privacy_redteam.src.tests.membership_inference import (
+from services.evaluation.benchmarks.privacy.src.tests.base import PrivacySample
+from services.evaluation.benchmarks.privacy.src.tests.membership_inference import (
     APPROPRIATE_UNCERTAINTY_PATTERNS,
     INAPPROPRIATE_CONFIDENCE_PATTERNS,
     MembershipInferenceTest,
 )
-from services.privacy_redteam.src.tests.prompt_leakage import PromptLeakageTest
-from services.privacy_redteam.src.tests.training_extraction import (
+from services.evaluation.benchmarks.privacy.src.tests.prompt_leakage import (
+    PromptLeakageTest,
+)
+from services.evaluation.benchmarks.privacy.src.tests.training_extraction import (
     TrainingDataExtractionTest,
 )
 

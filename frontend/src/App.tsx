@@ -9,15 +9,15 @@ import Sidebar from './components/Sidebar';
 
 // Pages
 import Dashboard from './pages/Dashboard';
-import ToxicityBatch from './pages/ToxicityBatch';
-import BiasBatch from './pages/BiasBatch';
-import RealtimeAnalysis from './pages/RealtimeAnalysis';
-import Guardrails from './pages/Guardrails';
-import AdversarialTesting from './pages/AdversarialTesting';
-import Benchmarks from './pages/Benchmarks';
-import ReliabilityTesting from './pages/ReliabilityTesting';
-import PrivacyTesting from './pages/PrivacyTesting';
-import HallucinationDetection from './pages/HallucinationDetection';
+import ToxicityBatch from './pages/detection/ToxicityBatch';
+import BiasBatch from './pages/detection/BiasBatch';
+import RealtimeAnalysis from './pages/detection/RealtimeAnalysis';
+import Guardrails from './pages/safety/Guardrails';
+import AdversarialTesting from './pages/evaluation/AdversarialTesting';
+import Benchmarks from './pages/evaluation/Benchmarks';
+import ReliabilityTesting from './pages/evaluation/ReliabilityTesting';
+import PrivacyTesting from './pages/evaluation/PrivacyTesting';
+import HallucinationDetection from './pages/detection/HallucinationDetection';
 
 // Theme
 import theme from './theme';

@@ -12,6 +12,8 @@ export const MODEL_OPTIONS: ModelOption[] = [
   { value: 'openai-gpt-4o', label: 'OpenAI GPT-4o', model_name: 'gpt-4o' },
   { value: 'openai-gpt-4', label: 'OpenAI GPT-4', model_name: 'gpt-4' },
   { value: 'openai-gpt-3.5-turbo', label: 'OpenAI GPT-3.5 Turbo', model_name: 'gpt-3.5-turbo' },
+  { value: 'openrouter-deepseek/deepseek-chat', label: 'OpenRouter DeepSeek V3', model_name: 'deepseek/deepseek-chat' },
+  { value: 'openrouter-meta-llama/llama-3-8b-instruct', label: 'OpenRouter Llama 3 8B', model_name: 'meta-llama/llama-3-8b-instruct' },
 ];
 
 const DEFAULT_MODEL: Model = {

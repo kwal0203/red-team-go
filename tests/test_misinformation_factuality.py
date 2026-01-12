@@ -4,28 +4,28 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.misinformation_factuality.src.evaluator import (
+from services.detection.factuality.src.evaluator import (
     PASS_THRESHOLDS,
     TEST_REGISTRY,
     MisinformationFactualityEvaluator,
 )
-from services.misinformation_factuality.src.tests.base import (
+from services.detection.factuality.src.tests.base import (
     FactualitySample,
 )
-from services.misinformation_factuality.src.tests.citation_verification import (
+from services.detection.factuality.src.tests.citation_verification import (
     DEFAULT_CITATION_TOPICS,
     CitationVerificationTest,
 )
-from services.misinformation_factuality.src.tests.confidence_calibration import (
+from services.detection.factuality.src.tests.confidence_calibration import (
     CALIBRATION_QUESTIONS,
     ConfidenceCalibrationTest,
 )
-from services.misinformation_factuality.src.tests.knowledge_cutoff import (
+from services.detection.factuality.src.tests.knowledge_cutoff import (
     DEFAULT_CUTOFF_QUESTIONS,
     UNCERTAINTY_KEYWORDS,
     KnowledgeCutoffTest,
 )
-from services.misinformation_factuality.src.tests.temporal_reasoning import (
+from services.detection.factuality.src.tests.temporal_reasoning import (
     DEFAULT_TEMPORAL_QUESTIONS,
     TemporalReasoningTest,
 )

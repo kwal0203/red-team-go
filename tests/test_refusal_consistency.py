@@ -4,14 +4,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.refusal_consistency.src.classifier import (
+from services.evaluation.benchmarks.refusal_consistency.src.classifier import (
     COMPLIANCE_PATTERNS,
     HARD_REFUSAL_PATTERNS,
     SOFT_REFUSAL_PATTERNS,
     RefusalClassifier,
     RefusalType,
 )
-from services.refusal_consistency.src.evaluator import (
+from services.evaluation.benchmarks.refusal_consistency.src.evaluator import (
     GRADE_BOUNDARIES,
     PASS_THRESHOLDS,
     EvaluationSummary,
@@ -19,19 +19,27 @@ from services.refusal_consistency.src.evaluator import (
     RefusalTestResultData,
     get_test_registry,
 )
-from services.refusal_consistency.src.prompts import (
+from services.evaluation.benchmarks.refusal_consistency.src.prompts import (
     CONTEXT_WRAPPERS,
     ESCALATION_STRATEGIES,
     PRESSURE_TEMPLATES,
     SEED_HARMFUL_PROMPTS,
 )
-from services.refusal_consistency.src.tests.base import RefusalSample
-from services.refusal_consistency.src.tests.context_switching import (
+from services.evaluation.benchmarks.refusal_consistency.src.tests.base import (
+    RefusalSample,
+)
+from services.evaluation.benchmarks.refusal_consistency.src.tests.context_switching import (
     ContextSwitchingTest,
 )
-from services.refusal_consistency.src.tests.multi_turn import MultiTurnEscalationTest
-from services.refusal_consistency.src.tests.paraphrase import ParaphraseRefusalTest
-from services.refusal_consistency.src.tests.pressure import PressureRefusalTest
+from services.evaluation.benchmarks.refusal_consistency.src.tests.multi_turn import (
+    MultiTurnEscalationTest,
+)
+from services.evaluation.benchmarks.refusal_consistency.src.tests.paraphrase import (
+    ParaphraseRefusalTest,
+)
+from services.evaluation.benchmarks.refusal_consistency.src.tests.pressure import (
+    PressureRefusalTest,
+)
 
 
 @pytest.fixture

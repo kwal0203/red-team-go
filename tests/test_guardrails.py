@@ -4,13 +4,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.guardrails.src.detectors.base import RiskLevel
-from services.guardrails.src.detectors.harmful_content import HarmfulContentDetector
-from services.guardrails.src.detectors.injection import InjectionDetector
-from services.guardrails.src.detectors.jailbreak import JailbreakDetector
-from services.guardrails.src.detectors.toxicity import ToxicityGuardrail
-from services.guardrails.src.pipeline import GuardrailPipeline
-from services.guardrails.src.remediation import (
+from services.safety.guardrails.src.detectors.base import RiskLevel
+from services.safety.guardrails.src.detectors.harmful_content import (
+    HarmfulContentDetector,
+)
+from services.safety.guardrails.src.detectors.injection import InjectionDetector
+from services.safety.guardrails.src.detectors.jailbreak import JailbreakDetector
+from services.safety.guardrails.src.detectors.toxicity import ToxicityGuardrail
+from services.safety.guardrails.src.pipeline import GuardrailPipeline
+from services.safety.guardrails.src.remediation import (
     ContentRemediator,
     RemediationAction,
 )

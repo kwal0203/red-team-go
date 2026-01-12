@@ -4,14 +4,20 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.prompt_generation.src.evaluator import (
+from services.evaluation.prompt_generation.src.evaluator import (
     GenerationReport,
     PromptEvaluator,
 )
-from services.prompt_generation.src.generators.base import GeneratedPrompt
-from services.prompt_generation.src.generators.genetic import GeneticPromptGenerator
-from services.prompt_generation.src.generators.llm_generator import LLMPromptGenerator
-from services.prompt_generation.src.generators.pair import PAIRPromptGenerator
+from services.evaluation.prompt_generation.src.generators.base import GeneratedPrompt
+from services.evaluation.prompt_generation.src.generators.genetic import (
+    GeneticPromptGenerator,
+)
+from services.evaluation.prompt_generation.src.generators.llm_generator import (
+    LLMPromptGenerator,
+)
+from services.evaluation.prompt_generation.src.generators.pair import (
+    PAIRPromptGenerator,
+)
 
 
 @pytest.fixture
@@ -35,7 +41,7 @@ class TestLLMPromptGenerator:
 
     def test_module_level_category_prompts(self):
         """Test that category prompts are defined at module level."""
-        from services.prompt_generation.src.generators import llm_generator
+        from services.evaluation.prompt_generation.src.generators import llm_generator
 
         assert hasattr(llm_generator, "CATEGORY_PROMPTS")
         assert "jailbreak" in llm_generator.CATEGORY_PROMPTS
@@ -81,7 +87,9 @@ class TestGeneticPromptGenerator:
 
     def test_generator_with_config(self):
         """Test generator with custom config."""
-        from services.prompt_generation.src.generators.genetic import GeneticConfig
+        from services.evaluation.prompt_generation.src.generators.genetic import (
+            GeneticConfig,
+        )
 
         config = GeneticConfig(
             population_size=10,
@@ -94,7 +102,9 @@ class TestGeneticPromptGenerator:
 
     def test_generate_without_model(self):
         """Test generation without model uses heuristic fitness."""
-        from services.prompt_generation.src.generators.genetic import GeneticConfig
+        from services.evaluation.prompt_generation.src.generators.genetic import (
+            GeneticConfig,
+        )
 
         config = GeneticConfig(
             population_size=5,
@@ -109,7 +119,9 @@ class TestGeneticPromptGenerator:
 
     def test_generate_with_seed(self):
         """Test generation with seed prompt."""
-        from services.prompt_generation.src.generators.genetic import GeneticConfig
+        from services.evaluation.prompt_generation.src.generators.genetic import (
+            GeneticConfig,
+        )
 
         config = GeneticConfig(population_size=5, num_generations=2)
         generator = GeneticPromptGenerator(config=config)
@@ -185,7 +197,9 @@ class TestGeneticPromptGenerator:
 
     def test_tournament_select(self):
         """Test tournament selection."""
-        from services.prompt_generation.src.generators.genetic import Individual
+        from services.evaluation.prompt_generation.src.generators.genetic import (
+            Individual,
+        )
 
         generator = GeneticPromptGenerator()
         population = [
@@ -219,7 +233,9 @@ class TestGeneticPromptGenerator:
 
     def test_different_categories(self):
         """Test generation for different categories."""
-        from services.prompt_generation.src.generators.genetic import GeneticConfig
+        from services.evaluation.prompt_generation.src.generators.genetic import (
+            GeneticConfig,
+        )
 
         config = GeneticConfig(population_size=5, num_generations=1)
         generator = GeneticPromptGenerator(config=config)
@@ -241,7 +257,7 @@ class TestPAIRPromptGenerator:
 
     def test_generator_with_config(self):
         """Test generator with custom config."""
-        from services.prompt_generation.src.generators.pair import PAIRConfig
+        from services.evaluation.prompt_generation.src.generators.pair import PAIRConfig
 
         config = PAIRConfig(
             max_iterations=10,
@@ -255,7 +271,7 @@ class TestPAIRPromptGenerator:
 
     def test_module_level_templates(self):
         """Test that templates are defined at module level."""
-        from services.prompt_generation.src.generators import pair
+        from services.evaluation.prompt_generation.src.generators import pair
 
         assert hasattr(pair, "PAIR_GOALS")
         assert "jailbreak" in pair.PAIR_GOALS
@@ -275,7 +291,7 @@ class TestPAIRPromptGenerator:
 
     def test_generate_without_model(self):
         """Test generation without model uses simulated responses."""
-        from services.prompt_generation.src.generators.pair import PAIRConfig
+        from services.evaluation.prompt_generation.src.generators.pair import PAIRConfig
 
         config = PAIRConfig(max_iterations=3)
         generator = PAIRPromptGenerator(config=config)
@@ -288,7 +304,7 @@ class TestPAIRPromptGenerator:
 
     def test_generate_with_seed(self):
         """Test generation with seed prompt."""
-        from services.prompt_generation.src.generators.pair import PAIRConfig
+        from services.evaluation.prompt_generation.src.generators.pair import PAIRConfig
 
         config = PAIRConfig(max_iterations=2)
         generator = PAIRPromptGenerator(config=config)
@@ -336,7 +352,7 @@ class TestPAIRPromptGenerator:
 
     def test_different_categories(self):
         """Test generation for different categories."""
-        from services.prompt_generation.src.generators.pair import PAIRConfig
+        from services.evaluation.prompt_generation.src.generators.pair import PAIRConfig
 
         config = PAIRConfig(max_iterations=2)
         generator = PAIRPromptGenerator(config=config)
@@ -348,7 +364,7 @@ class TestPAIRPromptGenerator:
 
     def test_iteration_metadata(self):
         """Test that iteration metadata is included."""
-        from services.prompt_generation.src.generators.pair import PAIRConfig
+        from services.evaluation.prompt_generation.src.generators.pair import PAIRConfig
 
         config = PAIRConfig(max_iterations=2)
         generator = PAIRPromptGenerator(config=config)
