@@ -2,7 +2,7 @@
 
 import pytest
 
-from services.adversarial_robustness.src.llm_judge import (
+from services.evaluation.benchmarks.robustness.src.llm_judge import (
     LLMJudge,
     is_safety_refusal,
 )

@@ -4,14 +4,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.adversarial_robustness.src.perturbations.base import PerturbedText
-from services.adversarial_robustness.src.perturbations.character import (
+from services.evaluation.benchmarks.robustness.src.perturbations.base import (
+    PerturbedText,
+)
+from services.evaluation.benchmarks.robustness.src.perturbations.character import (
     CharacterPerturbation,
 )
-from services.adversarial_robustness.src.perturbations.semantic import (
+from services.evaluation.benchmarks.robustness.src.perturbations.semantic import (
     SemanticPerturbation,
 )
-from services.adversarial_robustness.src.perturbations.word import WordPerturbation
+from services.evaluation.benchmarks.robustness.src.perturbations.word import (
+    WordPerturbation,
+)
 
 
 @pytest.fixture

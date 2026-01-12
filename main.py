@@ -8,43 +8,57 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 
-from services.aart.api import AARTRequest, AARTResponse
-from services.aart.service import aart_service
-from services.adversarial_robustness.service import adversarial_robustness_service
-from services.bias_detection_dbias.service import (
+from services.detection.bias.service import (
     bias_detection_realtime_service,
     dbias_service,
 )
-from services.consistency_reliability.service import consistency_reliability_service
-from services.datasets import (
+from services.detection.factuality.service import (
+    misinformation_factuality_service,
+)
+from services.detection.toxicity.service import (
+    toxicity_detection_realtime_service,
+    toxicity_detection_service,
+)
+from services.evaluation.attacks.aart.api import AARTRequest, AARTResponse
+from services.evaluation.attacks.aart.service import aart_service
+from services.evaluation.attacks.dsn.api import DSNRequest, DSNResponse
+from services.evaluation.attacks.dsn.service import dsn_service
+from services.evaluation.attacks.gptfuzzer.api import (
+    GPTFuzzerRequest,
+    GPTFuzzerResponse,
+)
+from services.evaluation.attacks.gptfuzzer.service import gptfuzzer_service
+from services.evaluation.attacks.jailbreakhub.api import (
+    JailbreakHubRequest,
+    JailbreakHubResponse,
+)
+from services.evaluation.attacks.jailbreakhub.service import jailbreakhub_service
+from services.evaluation.attacks.sap.api import SAPRequest, SAPResponse
+from services.evaluation.attacks.sap.service import sap_service
+from services.evaluation.benchmarks.consistency_reliability.service import (
+    consistency_reliability_service,
+)
+from services.evaluation.benchmarks.privacy.service import privacy_redteam_service
+from services.evaluation.benchmarks.refusal_consistency.service import (
+    refusal_consistency_service,
+)
+from services.evaluation.benchmarks.robustness.service import (
+    adversarial_robustness_service,
+)
+from services.evaluation.benchmarks.stereotypes.service import (
+    stereotype_benchmark_service,
+)
+from services.evaluation.prompt_generation.service import prompt_generation_service
+from services.safety.guardrails.service import (
+    guardrails_evaluate_service,
+    guardrails_protect_service,
+)
+from services.shared.datasets import (
     DatasetCategory,
     DatasetNotFoundError,
     get_dataset,
     get_dataset_info,
     list_datasets,
-)
-from services.dsn.api import DSNRequest, DSNResponse
-from services.dsn.service import dsn_service
-from services.gptfuzzer.api import GPTFuzzerRequest, GPTFuzzerResponse
-from services.gptfuzzer.service import gptfuzzer_service
-from services.guardrails.service import (
-    guardrails_evaluate_service,
-    guardrails_protect_service,
-)
-from services.jailbreakhub.api import JailbreakHubRequest, JailbreakHubResponse
-from services.jailbreakhub.service import jailbreakhub_service
-from services.misinformation_factuality.service import (
-    misinformation_factuality_service,
-)
-from services.privacy_redteam.service import privacy_redteam_service
-from services.prompt_generation.service import prompt_generation_service
-from services.refusal_consistency.service import refusal_consistency_service
-from services.sap.api import SAPRequest, SAPResponse
-from services.sap.service import sap_service
-from services.stereotype_benchmarks.service import stereotype_benchmark_service
-from services.toxicity_detection.service import (
-    toxicity_detection_realtime_service,
-    toxicity_detection_service,
 )
 from utils.artifact_storage import store_evaluation_artifact
 from utils.auth import APIKeyDep
@@ -406,7 +420,7 @@ def toxicity_detection_realtime(
             model=args.model.model_dump(),
             prompt=args.prompt,
         )
-        response = ResultRealtimeToxicity(**result)
+        response = result
         store_evaluation_artifact(
             request,
             "toxicity_realtime",
@@ -462,7 +476,7 @@ def bias_detection_realtime(
             model=args.model.model_dump(),
             prompt=args.prompt,
         )
-        response = ResultRealtimeBias(**result)
+        response = result
         store_evaluation_artifact(
             request,
             "bias_realtime",
@@ -1159,7 +1173,7 @@ def hallucination_confidence(
     Returns:
         ModelConfidenceResponse with confidence score, risk level, and details.
     """
-    from services.hallucination_detection_model_confidence import evaluate_confidence
+    from services.detection.hallucination.confidence import evaluate_confidence
 
     logger.info(f"Hallucination confidence check for model: {args.model.name}")
     try:

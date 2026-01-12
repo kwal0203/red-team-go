@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from services.hallucination_detection_model_confidence.src.confidence_calculator import (
+from services.detection.hallucination.confidence.src.confidence_calculator import (
     ConfidenceCalculator,
     ConfidenceMethod,
     ConfidenceResult,
@@ -199,7 +199,7 @@ class TestEvaluateTextConfidence:
 
     def test_valid_logprobs(self):
         """Test evaluation with valid pre-computed logprobs."""
-        from services.hallucination_detection_model_confidence import (
+        from services.detection.hallucination.confidence import (
             evaluate_text_confidence,
         )
 
@@ -218,7 +218,7 @@ class TestEvaluateTextConfidence:
 
     def test_empty_logprobs_raises_error(self):
         """Test that empty logprobs raises error."""
-        from services.hallucination_detection_model_confidence import (
+        from services.detection.hallucination.confidence import (
             evaluate_text_confidence,
         )
 
@@ -227,7 +227,7 @@ class TestEvaluateTextConfidence:
 
     def test_invalid_logprobs_format(self):
         """Test that malformed logprobs raises error."""
-        from services.hallucination_detection_model_confidence import (
+        from services.detection.hallucination.confidence import (
             evaluate_text_confidence,
         )
 
@@ -240,7 +240,7 @@ class TestEvaluateTextConfidence:
 
     def test_invalid_method_raises_error(self):
         """Test that invalid method raises error."""
-        from services.hallucination_detection_model_confidence import (
+        from services.detection.hallucination.confidence import (
             evaluate_text_confidence,
         )
 
@@ -253,7 +253,7 @@ class TestEvaluateTextConfidence:
 
     def test_include_all_methods(self):
         """Test including all methods in result."""
-        from services.hallucination_detection_model_confidence import (
+        from services.detection.hallucination.confidence import (
             evaluate_text_confidence,
         )
 
@@ -279,7 +279,7 @@ class TestLegacyServiceInterface:
 
     def test_legacy_logprobs_interface(self):
         """Test legacy interface with pre-computed logprobs."""
-        from services.hallucination_detection_model_confidence import service
+        from services.detection.hallucination.confidence import service
 
         class Args:
             logprobs = [{"logprob": -0.5}, {"logprob": -1.0}]
@@ -295,7 +295,7 @@ class TestLegacyServiceInterface:
 
     def test_missing_args_raises_error(self):
         """Test that missing args raises error."""
-        from services.hallucination_detection_model_confidence import service
+        from services.detection.hallucination.confidence import service
 
         class Args:
             pass

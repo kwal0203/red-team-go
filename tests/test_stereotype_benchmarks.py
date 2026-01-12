@@ -4,11 +4,17 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.stereotype_benchmarks.src.datasets.base import BiasType
-from services.stereotype_benchmarks.src.datasets.bbq import BBQDataset
-from services.stereotype_benchmarks.src.datasets.crows_pairs import CrowSPairsDataset
-from services.stereotype_benchmarks.src.datasets.stereoset import StereoSetDataset
-from services.stereotype_benchmarks.src.evaluator import StereotypeBenchmarkEvaluator
+from services.evaluation.benchmarks.stereotypes.src.datasets.base import BiasType
+from services.evaluation.benchmarks.stereotypes.src.datasets.bbq import BBQDataset
+from services.evaluation.benchmarks.stereotypes.src.datasets.crows_pairs import (
+    CrowSPairsDataset,
+)
+from services.evaluation.benchmarks.stereotypes.src.datasets.stereoset import (
+    StereoSetDataset,
+)
+from services.evaluation.benchmarks.stereotypes.src.evaluator import (
+    StereotypeBenchmarkEvaluator,
+)
 
 
 @pytest.fixture

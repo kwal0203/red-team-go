@@ -4,12 +4,13 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
-from services.model_wrappers.model_huggingface_remote import APIModelHuggingFace
-from services.model_wrappers.model_openai import APIModelOpenai
-from services.model_wrappers.model_openrouter import APIModelOpenRouter
+from services.shared.model_wrappers.model_huggingface_remote import APIModelHuggingFace
+from services.shared.model_wrappers.model_openai import APIModelOpenai
+from services.shared.model_wrappers.model_openrouter import APIModelOpenRouter
 from utils.config import (
     get_default_model_provider,
     get_openai_model_name,
+    get_openrouter_key,
     get_openrouter_model_name,
 )
 from utils.models import Model as ModelConfig
@@ -72,6 +73,11 @@ def create_target_model(model: ModelConfig | Mapping[str, Any]):
             model_name=model_id or get_openai_model_name(),
         )
     if provider == "openrouter":
+        if not get_openrouter_key():
+            raise ValueError(
+                "OpenRouter API key is required for OpenRouter models "
+                "(set OPENROUTER_API_KEY or choose a different provider)"
+            )
         logger.info(f"Creating OpenRouter model wrapper for {model_name}")
         return APIModelOpenRouter(
             name=model_name,

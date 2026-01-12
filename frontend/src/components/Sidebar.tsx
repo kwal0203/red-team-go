@@ -87,6 +87,7 @@ export default function Sidebar() {
           <NavItem to="/realtime">Real-time Analysis</NavItem>
           <NavItem to="/toxicity-batch">Toxicity Batch</NavItem>
           <NavItem to="/bias-batch">Bias Batch</NavItem>
+          <NavItem to="/hallucination">Hallucination Detection</NavItem>
         </NavSection>
 
         <NavSection title="Safety">
@@ -98,7 +99,6 @@ export default function Sidebar() {
           <NavItem to="/benchmarks">Stereotype Benchmarks</NavItem>
           <NavItem to="/reliability">Reliability Testing</NavItem>
           <NavItem to="/privacy">Privacy Testing</NavItem>
-          <NavItem to="/hallucination">Hallucination Detection</NavItem>
         </NavSection>
       </VStack>
     </Box>

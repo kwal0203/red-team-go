@@ -58,15 +58,31 @@ function StatCard(props: StatCardProps) {
   );
 }
 
-const FEATURES = [
-  { name: 'Toxicity Detection', endpoints: ['/toxicity-detection-batch', '/toxicity-detection-realtime'] },
-  { name: 'Bias Detection', endpoints: ['/bias-detection-batch', '/bias-detection-realtime'] },
-  { name: 'Guardrails', endpoints: ['/evaluate/guardrails', '/protect/guardrails'] },
-  { name: 'Adversarial Testing', endpoints: ['/adversarial-robustness', '/generate-adversarial-prompts'] },
-  { name: 'Stereotype Benchmarks', endpoints: ['/stereotype-benchmark'] },
-  { name: 'Reliability Testing', endpoints: ['/consistency-reliability', '/misinformation-factuality', '/refusal-consistency'] },
-  { name: 'Privacy Red Team', endpoints: ['/privacy-redteam'] },
-  { name: 'Hallucination Detection', endpoints: ['/hallucination-confidence'] },
+const FEATURE_GROUPS = [
+  {
+    title: 'Detection',
+    features: [
+      { name: 'Toxicity Detection', endpoints: ['/toxicity-detection-batch', '/toxicity-detection-realtime'] },
+      { name: 'Bias Detection', endpoints: ['/bias-detection-batch', '/bias-detection-realtime'] },
+      { name: 'Hallucination Detection', endpoints: ['/hallucination-confidence'] },
+      { name: 'Factuality Analysis', endpoints: ['/misinformation-factuality'] },
+    ]
+  },
+  {
+    title: 'Safety',
+    features: [
+      { name: 'Guardrails', endpoints: ['/evaluate/guardrails', '/protect/guardrails'] },
+    ]
+  },
+  {
+    title: 'Evaluation',
+    features: [
+      { name: 'Adversarial Testing', endpoints: ['/adversarial-robustness', '/generate-adversarial-prompts'] },
+      { name: 'Stereotype Benchmarks', endpoints: ['/stereotype-benchmark'] },
+      { name: 'Reliability & Consistency', endpoints: ['/consistency-reliability', '/refusal-consistency'] },
+      { name: 'Privacy Red Team', endpoints: ['/privacy-redteam'] },
+    ]
+  }
 ];
 
 export default function Dashboard() {
@@ -125,27 +141,31 @@ export default function Dashboard() {
         />
       </SimpleGrid>
 
-      <Card>
-        <CardHeader>
-          <Heading size="md">Available Features</Heading>
-        </CardHeader>
-        <CardBody>
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
-            {FEATURES.map((feature) => (
-              <Box key={feature.name} p={3} borderWidth={1} borderRadius="md">
-                <Text fontWeight="semibold" mb={2}>{feature.name}</Text>
-                <VStack align="start" spacing={1}>
-                  {feature.endpoints.map((ep) => (
-                    <Badge key={ep} colorScheme="blue" fontSize="xs">
-                      {ep}
-                    </Badge>
-                  ))}
-                </VStack>
-              </Box>
-            ))}
-          </SimpleGrid>
-        </CardBody>
-      </Card>
+      <VStack spacing={8} align="stretch">
+        {FEATURE_GROUPS.map((group) => (
+          <Card key={group.title}>
+            <CardHeader>
+              <Heading size="md">{group.title}</Heading>
+            </CardHeader>
+            <CardBody>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
+                {group.features.map((feature) => (
+                  <Box key={feature.name} p={3} borderWidth={1} borderRadius="md">
+                    <Text fontWeight="semibold" mb={2}>{feature.name}</Text>
+                    <VStack align="start" spacing={1}>
+                      {feature.endpoints.map((ep) => (
+                        <Badge key={ep} colorScheme="blue" fontSize="xs">
+                          {ep}
+                        </Badge>
+                      ))}
+                    </VStack>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </CardBody>
+          </Card>
+        ))}
+      </VStack>
     </Box>
   );
 }

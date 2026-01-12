@@ -12,13 +12,16 @@ Tests PII detection for:
 
 import pytest
 
-from services.guardrails.src.detectors.privacy import (
+from services.safety.guardrails.src.detectors.privacy import (
     PII_PATTERNS,
     PII_RISK_WEIGHTS,
     PrivacyDetector,
 )
-from services.guardrails.src.pipeline import GuardrailPipeline
-from services.guardrails.src.remediation import ContentRemediator, RemediationAction
+from services.safety.guardrails.src.pipeline import GuardrailPipeline
+from services.safety.guardrails.src.remediation import (
+    ContentRemediator,
+    RemediationAction,
+)
 
 
 class TestPrivacyDetectorBasics:
